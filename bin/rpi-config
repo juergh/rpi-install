@@ -1,0 +1,198 @@
+#!/bin/bash -eu
+#
+# Configure a Raspberry Pi system
+#
+
+function out()
+{
+        rc=$?
+
+        if [ "${rc}" -ne 0 ] ; then
+                echo "-- Script failed" >&2
+        fi
+}
+
+function install_tools()
+{
+	echo "-- Install tools"
+
+	cp "${HERE}"/rpi-* "${PREFIX}"/usr/bin
+}
+
+function set_hostname()
+{
+	echo "-- Set the hostname"
+
+	cp "${HERE}"/../etc/rpi-hostname.service "${PREFIX}"/etc/systemd/system/
+	systemctl --root="${PREFIX}" enable rpi-hostname.service
+}
+
+function set_kernel_cmdline()
+{
+	local cmdline opts opt
+	echo "-- Set the kernel commandline"
+
+    cmdline=()
+    readarray -t opts < <(head -1 "${BOOT_DIR}"/cmdline.txt | tr ' ' '\n')
+    for opt in "${opts[@]}" ; do
+        case "${opt}" in
+            console=*|quiet) ;;        # Drop the option
+            *) cmdline+=("${opt}") ;;  # Keep the option
+        esac
+    done
+    # cmdline+=("earlycon=pl011,0xfe201000") # This option might break boot
+    cmdline+=("console=tty1" "console=ttyAMA0,115200")
+    echo "${cmdline[*]}" > "${BOOT_DIR}"/cmdline.txt
+
+	# Update config.txt
+    sed -i '/^# rpi-config$/,+2d' "${BOOT_DIR}"/config.txt
+    cat << EOF >> "${BOOT_DIR}"/config.txt
+# rpi-config
+[all]
+enable_uart=1
+EOF
+
+	# Purge flask-kernel options
+	if [ -e "${PREFIX}"/etc/default/flash-kernel ] ; then
+		cat << EOF > "${PREFIX}"/etc/default/flash-kernel
+LINUX_KERNEL_CMDLINE=
+LINUX_KERNEL_CMDLINE_DEFAULTS=
+EOF
+	fi
+}
+
+function add_user()
+{
+	local user
+
+	echo "-- Add user"
+
+	for user in "${@}" ; do
+		echo "--   ${user}"
+
+#		if ! grep -q "^{user}:" "${PREFIX}"/etc/group  ; then
+#			groupadd --root "${PREFIX}" "${user}"
+#		fi
+
+		if ! grep -q "^${user}:" "${PREFIX}"/etc/passwd  ; then
+			# shellcheck disable=SC2016
+#			useradd --root "${PREFIX}" -g "${user}" \
+#					-p "$(openssl passwd -1 "${user}")" "${user}"
+			useradd --root "${PREFIX}" -p "$(openssl passwd -1 "${user}")" \
+					"${user}"
+		fi
+
+		cat << EOF > "${PREFIX}"/etc/sudoers.d/"${user}"
+"${user}" ALL = NOPASSWD: ALL
+EOF
+	done
+}
+
+function set_service()
+{
+	local action service
+
+	action=${1}
+	shift
+
+	echo "-- ${action^} service"
+
+	for service in "${@}" ; do
+		echo "--   ${service}"
+		systemctl --root="${PREFIX}" "${action}" "${service}"
+
+		# Enable pwauth for ssh
+		if [ "${action}" = "enable" ] && [ "${service}" = "ssh" ] ; then
+			sed -i '/^# rpi-config$/,+1d' "${PREFIX}"/etc/ssh/sshd_config
+			cat << EOF >> "${PREFIX}"/etc/ssh/sshd_config
+# rpi-config
+PasswordAuthentication yes
+EOF
+		fi
+	done
+}
+
+function enable_wifi()
+{
+	local wifi_ssid wifi_passphrase
+
+	if ! [ -d "${PREFIX}"/etc/netplan ] ; then
+		return
+	fi
+
+	echo "-- Enable wifi"
+
+	wifi_ssid=$(pass show local/wifi | grep '^ssid: ')
+	wifi_ssid=${wifi_ssid#* }
+
+	wifi_passphrase=$(pass show local/wifi | grep '^passphrase: ')
+	wifi_passphrase=${wifi_passphrase#* }
+
+	cat << EOF > "${PREFIX}"/etc/netplan/99-prepare-rpi-image.yaml
+network:
+    wifis:
+        wlan0:
+            dhcp4: true
+            optional: true
+            access-points:
+                "${wifi_ssid}":
+                    password: "${wifi_passphrase}"
+EOF
+}
+
+function usage()
+{
+	cat <<EOF
+Usage: rpi-config [-h] [-p PREFIX]
+
+Configure a Raspberry Pi system.
+
+Postional arguments:
+  -h, --help           Show this help text and exit.
+  -p, --prefix PREFIX  Configure the system under <PREFIX> instead of the
+                       current system.
+EOF
+}
+
+HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)
+PREFIX=
+
+while [ "${#}" -gt 0 ] ; do
+	case "${1}" in
+		-h|--help)
+			usage
+			exit
+			;;
+		-p|--prefix)
+			shift
+			PREFIX=${1}
+			;;
+		*)
+			echo "-- Invalid argument: ${1}" >&2
+			exit 2
+			;;
+	esac
+	shift
+done
+
+trap out EXIT INT TERM HUP
+
+BOOT_DIR=${PREFIX}/boot/firmware
+if ! [ -d "${BOOT_DIR}" ] ; then
+	echo "-- No such boot directory: ${BOOT_DIR}"
+	exit 1
+fi
+
+# Purge cloud-init cruft
+rm -f "${BOOT_DIR}"/user-data
+
+install_tools
+set_hostname
+set_kernel_cmdline
+
+add_user ubuntu bottle_pi
+
+set_service enable ssh
+set_service disable unattended-upgrades
+
+enable_wifi

@@ -1,0 +1,97 @@
+#!/bin/sh
+#
+# Set the hostname based on the Raspberry Pi model and serial number
+#
+
+get_hostname()
+{
+	# shellcheck disable=SC2002,2019,2018
+	model=$(cat /proc/device-tree/model | \
+				tr -d '\0\n' | \
+				tr 'A-Z' 'a-z' | \
+				sed -e 's/^raspberry pi /rpi /' \
+					-e 's/ rev / rev/' \
+					-e 's/compute module / cm /' \
+					-e 's/ model //' \
+					-e 's/ /-/g' \
+					-e 's/\./d/g')
+
+	# shellcheck disable=SC2002
+	serial=$(cat /proc/device-tree/serial-number | tr -d '\0\n' | tail -c 4)
+
+	echo "${model}-${serial}"
+}
+
+usage()
+{
+	cat <<EOF
+Usage: rpi-hostname [-h] [get|set|unset]
+
+Get, set or unset the hostname based on the Raspberry Pi model and serial
+number.
+
+Postional arguments:
+  -h, --help  Print the current help text and exit.
+EOF
+}
+
+ACTION="get"
+while [ $# -ne 0 ] ; do
+	case "${1}" in
+		-h|--help)
+			usage
+			exit
+			;;
+		get|set|unset)
+			ACTION=${1}
+			;;
+		*)
+			echo "Invalid argument: ${1}" >&2
+			exit 2
+			;;
+	esac
+	shift
+done
+
+
+case "${ACTION}" in
+	get)
+		hostname=$(get_hostname)
+		echo "${hostname}"
+		exit
+		;;
+	set)
+		hostname=$(get_hostname)
+		if [ "$(hostname)" = "${hostname}" ] ; then
+			echo "Hostname is already set to: ${hostname}" >&2
+			exit 1
+		fi
+
+		# Set the hostname and make it persistent
+		hostname "${hostname}"
+		mv /etc/hostname /etc/hostname.rpi
+		echo "${hostname}" > /etc/hostname
+
+		# Update /etc/hosts
+		cat <<EOF >>/etc/hosts
+# rpi-hostname
+127.0.1.1 ${hostname}.localdomain ${hostname}
+EOF
+		;;
+	unset)
+		if ! [ -e /etc/hostname.rpi ] ; then
+			echo "Unable to unset hostname" \
+				 "(no such file: /etc/hostname.rpi)" >&2
+			exit 1
+		fi
+
+		# Revert the hostname change and make it persistent
+		hostname=$(cat /etc/hostname.rpi)
+		hostname "${hostname}"
+		mv /etc/hostname.rpi /etc/hostname
+
+		# Revert the update of /etc/hosts
+		sed -i -e '/^# rpi-hostname$/,+1d' /etc/hosts
+esac
+
+echo "Hostname set to: ${hostname}"

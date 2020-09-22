@@ -1,0 +1,147 @@
+#!/bin/sh
+#
+# Download and install a Raspberry Pi image
+#
+
+BOTTLE_PI=192.168.99.11:5000
+
+echo "--- Running installer"
+
+[ -d /dev ] || mkdir -m 0755 /dev
+[ -d /root ] || mkdir -m 0700 /root
+[ -d /sys ] || mkdir /sys
+[ -d /proc ] || mkdir /proc
+[ -d /tmp ] || mkdir /tmp
+[ -d /boot ] || mkdir /boot
+mkdir -p /var/lock
+mount -t sysfs -o nodev,noexec,nosuid sysfs /sys
+mount -t proc -o nodev,noexec,nosuid proc /proc
+
+mount -t devtmpfs -o nosuid,mode=0755 udev /dev
+mkdir /dev/pts
+mount -t devpts -o noexec,nosuid,gid=5,mode=0620 devpts /dev/pts || true
+
+echo "--- Waiting for /dev/mmcblk0p1"
+for i in $(seq 10) ; do
+	[ -b /dev/mmcblk0p1 ] && break
+    sleep .5
+done
+
+# Clear the one-time boot flag
+if mount /dev/mmcblk0p1 /boot ; then
+	sed -i 's,^# rpi-install ONCE ,,' /boot/config.txt
+	sync
+	umount /boot
+fi
+
+echo "--- Waiting for a network device"
+for i in $(seq 10) ; do
+	[ -e /sys/class/net/eth0 ] && break
+	[ -e /sys/class/net/wlan0 ] && break
+	sleep .5
+done
+
+# Get an IP
+dhclient
+
+# Run the interactive installer
+while true ; do
+	cat <<__EOF__
+
+--- Select an image to install
+
+      1) Groovy - arm64
+      2) Groovy - armhf
+      3) Focal  - arm64
+      4) Focal  - armhf
+      5) Bionic - arm64
+      6) Bionic - armhf
+
+     10) Core20 - arm64
+     11) Core20 - armhf
+     12) Core18 - arm64
+     13) Core18 - armhf
+     14) Core16 - arm64
+     15) Core16 - armhf
+
+     20) Raspberry Pi OS Lite - arm64
+     21) Raspberry Pi OS Lite - armhf
+
+     90) Run a shell
+     91) Enter an image name manually
+     92) Update the installer
+     99) Reboot
+
+__EOF__
+
+	# shellcheck disable=SC2039
+	echo -n "--- Choice: "
+	read -r tmp
+
+	image=
+	case "${tmp}" in
+		#
+		# Ubuntu Server
+		#
+		1) image=ubuntu-groovy-arm64 ;;
+		2) image=ubuntu-groovy-armhf ;;
+		3) image=ubuntu-focal-arm64 ;;
+		4) image=ubuntu-focal-armhf ;;
+		5) image=ubuntu-bionic-arm64 ;;
+		6) image=ubuntu-bionic-armhf ;;
+
+		#
+		# Ubuntu Core
+		#
+		10) image=ubuntu-core20-arm64 ;;
+		11) image=ubuntu-core20-armhf ;;
+		12) image=ubuntu-core18-arm64 ;;
+		13) image=ubuntu-core18-armhf ;;
+		14) image=ubuntu-core16-arm64 ;;
+		15) image=ubuntu-core16-armhf ;;
+
+		#
+		# Raspberry Pi OS
+		#
+		20) image=raspios-lite-arm64 ;;
+		21) image=raspios-lite-armhf ;;
+
+		#
+		# Misc options
+		#
+		90)
+			/bin/sh
+			;;
+		91)
+			# shellcheck disable=SC2039
+			echo -n "--- Image name: "
+			read -r image
+			;;
+		92)
+			if mount /dev/mmcblk0p1 /boot ; then
+				rpi-install
+				sync
+				umount /boot
+			fi
+			;;
+		99)
+			sync
+			reboot -f
+			;;
+
+		#
+		# Default
+		#
+		*)
+			;;
+	esac
+
+	if [ -n "${image}" ] ; then
+		echo "--- Installing ${image}"
+		if wget -O - "${BOTTLE_PI}/redfish/v1/Images/${image}" | \
+				gunzip -c > /dev/mmcblk0 ; then
+			sync
+			reboot -f
+		fi
+	fi
+done

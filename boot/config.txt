@@ -1,0 +1,8 @@
+# rpi-install firmware config snippet
+arm_64bit=0
+os_prefix=install/
+overlay_prefix=overlays/
+kernel=vmlinuz
+initramfs initrd.img
+cmdline=cmdline.txt
+enable_uart=1

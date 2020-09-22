@@ -1,0 +1,117 @@
+#!/bin/sh -eu
+#
+# Install the Raspberry Pi OS installer
+#
+
+out()
+{
+	rc=$?
+
+	if [ "${rc}" -ne 0 ] ; then
+		echo "-- Script failed" >&2
+	fi
+}
+
+usage()
+{
+	cat <<EOF
+Usage: rpi-install [-h] [-p PREFIX] [-r] [INSTALLER]
+
+Install (or reboot into) the Raspberry Pi OS installer.
+
+Positional arguments:
+  INSTALLER            The installer tarball. If not provided, download and
+                       install the installer tarball from github.
+
+Optional arguments:
+  -h, --help           Show this help text and exit.
+  -p, --prefix PREFIX  Install the installer to <PREFIX> instead of /.
+  -r, --reboot         Reboot into the installer.
+EOF
+}
+
+github_url=https://github.com/juergh/rpi-install
+prefix=
+reboot=0
+installer=
+
+while [ "${#}" -gt 0 ] ; do
+	case "${1}" in
+		-h|--help)
+			usage
+			exit
+			;;
+		-p|--prefix)
+			shift
+			prefix=${1}
+			;;
+		-r|--reboot)
+			reboot=1
+			;;
+		*)
+			if [ -z "${installer}" ] ; then
+				installer=${1}
+			else
+				echo "-- Invalid argument: ${1}" >&2
+				exit 1
+			fi
+			;;
+	esac
+	shift
+done
+
+# Find the boot directory
+if [ -e "${prefix}"/boot/firmware/config.txt ] ; then
+	boot_dir="${prefix}"/boot/firmware
+elif [ -e "${prefix}"/boot/config.txt ] ; then
+	boot_dir="${prefix}"/boot
+else
+	echo "-- No such boot directories: ${prefix}/boot{/firmware,}" >&2
+	exit 1
+fi
+
+echo "-- Use boot directory ${boot_dir}"
+
+if [ "${reboot}" -eq 1 ] ; then
+	echo "-- Reboot into installer"
+	sed -i 's,^\[gpio4=0\]$,# rpi-install ONCE [gpio4=0],' \
+		"${boot_dir}"/config.txt
+	reboot
+fi
+
+if [ -n "${installer}" ] ; then
+	# Check if the provided installer file exists
+	if ! [ -e "${installer}" ] ; then
+		echo "-- No such installer: ${installer}" >&2
+		exit 1
+	fi
+
+	# Unpack the provided installer
+	rm -rf "${boot_dir}/install"
+	echo "-- Install ${installer}"
+	installer=$(readlink -f "${installer}")
+	tar -C "${boot_dir}" -xzf "${installer}"
+
+else
+	# Check if the remote installer exists
+	installer_url=${github_url}/raw/main/release/rpi-install.tgz
+	if ! wget -q --spider "${installer_url}" ; then
+		echo "-- No such remote installer: ${installer_url}" >&2
+		exit 1
+	fi
+
+	# Download and unpack the installer
+	rm -rf "${boot_dir}/install"
+	echo "-- Install ${installer_url}"
+	wget -q -O - "${installer_url}" | tar -C "${boot_dir}" -xzf -
+fi
+
+# Modify config.txt
+echo "-- Modify config.txt"
+sed -i -e '/^# rpi-install$/,+3d' "${boot_dir}"/config.txt
+cat << EOF >> "${boot_dir}"/config.txt
+# rpi-install
+[all]
+[gpio4=0]
+include install/config.txt
+EOF
