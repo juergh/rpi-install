@@ -1,0 +1,13 @@
+[Unit]
+Description=Set the Raspberry Pi hostname
+DefaultDependencies=no
+Before=network-pre.target
+Wants=network-pre.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/rpi-hostname
+
+[Install]
+WantedBy=multi-user.target
