@@ -190,7 +190,7 @@ install_tools
 set_hostname
 set_kernel_cmdline
 
-add_user ubuntu bottle_pi
+add_user ubuntu bottle-pi
 
 set_service enable ssh
 set_service disable unattended-upgrades
