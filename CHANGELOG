@@ -1,2 +1,6 @@
+v0.0.2
+  * Add rpi-hostname.service
+  * rpi-config: Fix bottle-pi username
+  * rpi-prep: Initial commit
 v0.0.1
   * Initial version
