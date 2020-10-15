@@ -1,0 +1,86 @@
+#!/bin/bash -eu
+#
+# Prepare a Raspberry Pi image
+#
+
+function out()
+{
+	if [ -n "${PREFIX}" ] ; then
+		partumount "${PREFIX}"/boot/firmware
+		partumount "${PREFIX}"
+	fi
+}
+
+function usage()
+{
+	cat << EOF
+Usage: rpi-prep [-h] IMAGE
+
+Prepare a Raspbery Pi image.
+
+Optional arguments:
+  -h, --help  Show this help text and exit.
+EOF
+}
+
+image=
+
+while [ "${#}" -gt 0 ] ; do
+	case "${1}" in
+		-h|--help)
+			usage
+			exit
+			;;
+		*)
+			if [ -z "${image}" ] ; then
+				image=${1}
+			else
+				echo "Invalid argument: ${1}" >&2
+				exit 2
+			fi
+			;;
+	esac
+	shift
+done
+
+if [ -z "${image}" ] ; then
+	usage
+	exit 2
+fi
+
+outfile=${image##*/}
+outfile=${outfile%.img*}+prep.img
+
+packed=0
+case "${image}" in
+	*.img.xz)
+		packed=1
+		echo "-- Unpack image"
+		xzcat "${image}" > "${outfile}"
+		;;
+	*.img)
+		echo "-- Copy image"
+		cp "${image}" "${outfile}"
+		;;
+	*)
+		echo "Unsupported image file format" >&2
+		exit 1
+		;;
+esac
+
+PREFIX=
+trap out EXIT INT TERM HUP
+
+PREFIX=$(partmount -b "${outfile}" 2)
+partmount "${outfile}" 1 "${PREFIX}"/boot/firmware
+
+sudo ./bin/rpi-install -p "${PREFIX}"
+sudo ./bin/rpi-config -p "${PREFIX}"
+
+partumount "${PREFIX}"/boot/firmware
+partumount "${PREFIX}"
+PREFIX=
+
+if [ "${packed}" -eq 1 ] ; then
+	gzip -f "${outfile}"
+fi
