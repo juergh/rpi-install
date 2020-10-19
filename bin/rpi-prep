@@ -16,10 +16,13 @@ function usage()
 	cat << EOF
 Usage: rpi-prep [-d] [-h] IMAGE
 
-Prepare a Raspbery Pi image.
+Prepare a Raspberry Pi image.
+
+Positional arguments:
+  IMAGE        The image to prepare.
 
 Optional arguments:
-  -d, --debug  Enable debug mode
+  -d, --debug  Enable debug mode.
   -h, --help   Show this help text and exit.
 EOF
 }
@@ -56,10 +59,8 @@ fi
 outfile=${image##*/}
 outfile=${outfile%.img*}+prep.img
 
-compressed=0
 case "${image}" in
 	*.img.xz)
-		compressed=1
 		echo "-- Decompress image"
 		xzcat "${image}" > "${outfile}"
 		;;
@@ -92,10 +93,7 @@ partumount "${PREFIX}"/boot/firmware
 partumount "${PREFIX}"
 PREFIX=
 
-if [ "${compressed}" -eq 1 ] ; then
-	echo "-- Compress image"
-	gzip -f -S .gz "${outfile}"
-	outfile=${outfile}.gz
-fi
+echo "-- Compress image"
+gzip -f -S .gz "${outfile}"
 
-echo "-- Created image ${outfile}"
+echo "-- Created image ${outfile}.gz"
