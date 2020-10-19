@@ -65,26 +65,24 @@ function add_user()
 {
 	local user
 
+	echo "-- Disable users-groups in cloud.cfg"
+	sed -i 's/^ - users-groups/# rpi-config - users-groups/' \
+		"${PREFIX}"/etc/cloud/cloud.cfg
+
 	echo "-- Add user"
 
 	for user in "${@}" ; do
 		echo "--   ${user}"
-
-#		if ! grep -q "^{user}:" "${PREFIX}"/etc/group  ; then
-#			groupadd --root "${PREFIX}" "${user}"
-#		fi
-
 		if ! grep -q "^${user}:" "${PREFIX}"/etc/passwd  ; then
-			# shellcheck disable=SC2016
-#			useradd --root "${PREFIX}" -g "${user}" \
-#					-p "$(openssl passwd -1 "${user}")" "${user}"
-			useradd --root "${PREFIX}" -p "$(openssl passwd -1 "${user}")" \
+			useradd --root "${PREFIX}" --create-home --user-group \
+					--shell /bin/bash --password "$(openssl passwd -1 "${user}")" \
 					"${user}"
 		fi
 
 		cat << EOF > "${PREFIX}"/etc/sudoers.d/"${user}"
 "${user}" ALL = NOPASSWD: ALL
 EOF
+		chmod 440 "${PREFIX}"/etc/sudoers.d/"${user}"
 	done
 }
 
@@ -103,6 +101,9 @@ function set_service()
 
 		# Enable pwauth for ssh
 		if [ "${action}" = "enable" ] && [ "${service}" = "ssh" ] ; then
+			echo "--   Enable password authentication for ssh"
+			sed -i 's/^PasswordAuthentication/# rpi-config PasswordAuthentication/' \
+				"${PREFIX}"/etc/ssh/sshd_config
 			sed -i '/^# rpi-config$/,+1d' "${PREFIX}"/etc/ssh/sshd_config
 			cat << EOF >> "${PREFIX}"/etc/ssh/sshd_config
 # rpi-config
@@ -184,7 +185,9 @@ if ! [ -d "${BOOT_DIR}" ] ; then
 fi
 
 # Purge cloud-init cruft
-rm -f "${BOOT_DIR}"/user-data
+cat << EOF > "${BOOT_DIR}"/user-data
+#cloud-config
+EOF
 
 install_tools
 set_hostname
