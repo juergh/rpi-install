@@ -14,19 +14,24 @@ function out()
 function usage()
 {
 	cat << EOF
-Usage: rpi-prep [-h] IMAGE
+Usage: rpi-prep [-d] [-h] IMAGE
 
 Prepare a Raspbery Pi image.
 
 Optional arguments:
-  -h, --help  Show this help text and exit.
+  -d, --debug  Enable debug mode
+  -h, --help   Show this help text and exit.
 EOF
 }
 
+debug=0
 image=
 
 while [ "${#}" -gt 0 ] ; do
 	case "${1}" in
+		-d|--debug)
+			debug=1
+			;;
 		-h|--help)
 			usage
 			exit
@@ -51,11 +56,11 @@ fi
 outfile=${image##*/}
 outfile=${outfile%.img*}+prep.img
 
-packed=0
+compressed=0
 case "${image}" in
 	*.img.xz)
-		packed=1
-		echo "-- Unpack image"
+		compressed=1
+		echo "-- Decompress image"
 		xzcat "${image}" > "${outfile}"
 		;;
 	*.img)
@@ -74,13 +79,23 @@ trap out EXIT INT TERM HUP
 PREFIX=$(partmount -b "${outfile}" 2)
 partmount "${outfile}" 1 "${PREFIX}"/boot/firmware
 
-sudo ./bin/rpi-install -p "${PREFIX}"
-sudo ./bin/rpi-config -p "${PREFIX}"
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)
+sudo "${here}"/rpi-install -p "${PREFIX}"
+sudo "${here}"/rpi-config -p "${PREFIX}"
+
+if [ "${debug}" -eq 1 ] ; then
+	echo "-- Enter debug mode (type 'exit' to continue)"
+	sudo chroot "${PREFIX}"
+fi
 
 partumount "${PREFIX}"/boot/firmware
 partumount "${PREFIX}"
 PREFIX=
 
-if [ "${packed}" -eq 1 ] ; then
-	gzip -f "${outfile}"
+if [ "${compressed}" -eq 1 ] ; then
+	echo "-- Compress image"
+	gzip -f -S .gz "${outfile}"
+	outfile=${outfile}.gz
 fi
+
+echo "-- Created image ${outfile}"
