@@ -63,8 +63,8 @@ case "${ACTION}" in
 	set)
 		hostname=$(get_hostname)
 		if [ "$(hostname)" = "${hostname}" ] ; then
-			echo "Hostname is already set to: ${hostname}" >&2
-			exit 1
+			echo "Hostname is already set to: ${hostname}"
+			exit
 		fi
 
 		# Set the hostname and make it persistent
