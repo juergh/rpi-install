@@ -83,6 +83,14 @@ function add_user()
 "${user}" ALL = NOPASSWD: ALL
 EOF
 		chmod 440 "${PREFIX}"/etc/sudoers.d/"${user}"
+
+#		pubkey=${HERE}/ssh/${user}.pubkey
+#		if -e [ "${pubkey}" ] ; then
+#			sshdir=${PREFIX}/home/${user}/.ssh
+#			mkdir -p -m 700 "${sshdir}"
+#			cat "${pubkey}" >> "${sshdir}"/authorized_keys
+#			chmod 600 "${sshdir}"/authorized_keys
+#		fi
 	done
 }
 
@@ -129,7 +137,7 @@ function enable_wifi()
 	wifi_passphrase=$(pass show local/wifi | grep '^passphrase: ')
 	wifi_passphrase=${wifi_passphrase#* }
 
-	cat << EOF > "${PREFIX}"/etc/netplan/99-prepare-rpi-image.yaml
+	cat << EOF > "${PREFIX}"/etc/netplan/99-rpi-config.yaml
 network:
     wifis:
         wlan0:
