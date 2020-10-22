@@ -22,6 +22,7 @@ mkdir /dev/pts
 mount -t devpts -o noexec,nosuid,gid=5,mode=0620 devpts /dev/pts || true
 
 echo "--- Waiting for /dev/mmcblk0p1"
+# shellcheck disable=SC2034
 for i in $(seq 10) ; do
 	[ -b /dev/mmcblk0p1 ] && break
     sleep .5
@@ -35,6 +36,7 @@ if mount /dev/mmcblk0p1 /boot ; then
 fi
 
 echo "--- Waiting for a network device"
+# shellcheck disable=SC2034
 for i in $(seq 10) ; do
 	[ -e /sys/class/net/eth0 ] && break
 	[ -e /sys/class/net/wlan0 ] && break
