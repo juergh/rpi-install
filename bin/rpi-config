@@ -12,19 +12,36 @@ function out()
         fi
 }
 
+function set_cloud_init_config()
+{
+	if [ -e "${BOOT_DIR}"/user-data ] ; then
+		echo "-- Clear cloud-init user-data"
+		# Purge cloud-init cruft
+		cat << EOF > "${BOOT_DIR}"/user-data
+#cloud-config
+EOF
+	fi
+
+	if [ -e "${ROOT_DIR}"/etc/cloud/cloud.cfg ] ; then
+		echo "-- Disable users-groups in cloud.cfg"
+		sed -i 's/^ - users-groups/# rpi-config - users-groups/' \
+			"${ROOT_DIR}"/etc/cloud/cloud.cfg
+	fi
+}
+
 function install_tools()
 {
 	echo "-- Install tools"
 
-	cp "${HERE}"/rpi-* "${PREFIX}"/usr/bin
+	cp "${HERE}"/rpi-* "${ROOT_DIR}"/usr/bin
 }
 
 function set_hostname()
 {
 	echo "-- Set the hostname"
 
-	cp "${HERE}"/../etc/rpi-hostname.service "${PREFIX}"/etc/systemd/system/
-	systemctl --root="${PREFIX}" enable rpi-hostname.service
+	cp "${HERE}"/../etc/rpi-hostname.service "${ROOT_DIR}"/etc/systemd/system/
+	systemctl --root="${ROOT_DIR}" enable rpi-hostname.service
 }
 
 function set_kernel_cmdline()
@@ -53,8 +70,8 @@ enable_uart=1
 EOF
 
 	# Purge flask-kernel options
-	if [ -e "${PREFIX}"/etc/default/flash-kernel ] ; then
-		cat << EOF > "${PREFIX}"/etc/default/flash-kernel
+	if [ -e "${ROOT_DIR}"/etc/default/flash-kernel ] ; then
+		cat << EOF > "${ROOT_DIR}"/etc/default/flash-kernel
 LINUX_KERNEL_CMDLINE=
 LINUX_KERNEL_CMDLINE_DEFAULTS=
 EOF
@@ -65,28 +82,24 @@ function add_user()
 {
 	local user
 
-	echo "-- Disable users-groups in cloud.cfg"
-	sed -i 's/^ - users-groups/# rpi-config - users-groups/' \
-		"${PREFIX}"/etc/cloud/cloud.cfg
-
 	echo "-- Add user"
 
 	for user in "${@}" ; do
 		echo "--   ${user}"
-		if ! grep -q "^${user}:" "${PREFIX}"/etc/passwd  ; then
-			useradd --root "${PREFIX}" --create-home --user-group \
+		if ! grep -q "^${user}:" "${ROOT_DIR}"/etc/passwd  ; then
+			useradd --root "${ROOT_DIR}" --create-home --user-group \
 					--shell /bin/bash --password "$(openssl passwd -1 "${user}")" \
 					"${user}"
 		fi
 
-		cat << EOF > "${PREFIX}"/etc/sudoers.d/"${user}"
+		cat << EOF > "${ROOT_DIR}"/etc/sudoers.d/"${user}"
 "${user}" ALL = NOPASSWD: ALL
 EOF
-		chmod 440 "${PREFIX}"/etc/sudoers.d/"${user}"
+		chmod 440 "${ROOT_DIR}"/etc/sudoers.d/"${user}"
 
 #		pubkey=${HERE}/ssh/${user}.pubkey
 #		if -e [ "${pubkey}" ] ; then
-#			sshdir=${PREFIX}/home/${user}/.ssh
+#			sshdir=${ROOT_DIR}/home/${user}/.ssh
 #			mkdir -p -m 700 "${sshdir}"
 #			cat "${pubkey}" >> "${sshdir}"/authorized_keys
 #			chmod 600 "${sshdir}"/authorized_keys
@@ -105,15 +118,15 @@ function set_service()
 
 	for service in "${@}" ; do
 		echo "--   ${service}"
-		systemctl --root="${PREFIX}" "${action}" "${service}"
+		systemctl --root="${ROOT_DIR}" "${action}" "${service}"
 
 		# Enable pwauth for ssh
 		if [ "${action}" = "enable" ] && [ "${service}" = "ssh" ] ; then
 			echo "--   Enable password authentication for ssh"
 			sed -i 's/^PasswordAuthentication/# rpi-config PasswordAuthentication/' \
-				"${PREFIX}"/etc/ssh/sshd_config
-			sed -i '/^# rpi-config$/,+1d' "${PREFIX}"/etc/ssh/sshd_config
-			cat << EOF >> "${PREFIX}"/etc/ssh/sshd_config
+				"${ROOT_DIR}"/etc/ssh/sshd_config
+			sed -i '/^# rpi-config$/,+1d' "${ROOT_DIR}"/etc/ssh/sshd_config
+			cat << EOF >> "${ROOT_DIR}"/etc/ssh/sshd_config
 # rpi-config
 PasswordAuthentication yes
 EOF
@@ -125,7 +138,7 @@ function enable_wifi()
 {
 	local wifi_ssid wifi_passphrase
 
-	if ! [ -d "${PREFIX}"/etc/netplan ] ; then
+	if ! [ -d "${ROOT_DIR}"/etc/netplan ] ; then
 		return
 	fi
 
@@ -137,7 +150,7 @@ function enable_wifi()
 	wifi_passphrase=$(pass show local/wifi | grep '^passphrase: ')
 	wifi_passphrase=${wifi_passphrase#* }
 
-	cat << EOF > "${PREFIX}"/etc/netplan/99-rpi-config.yaml
+	cat << EOF > "${ROOT_DIR}"/etc/netplan/99-rpi-config.yaml
 network:
     wifis:
         wlan0:
@@ -152,19 +165,19 @@ EOF
 function usage()
 {
 	cat <<EOF
-Usage: rpi-config [-h] [-p PREFIX]
+Usage: rpi-config [-h] [-r DIR]
 
 Configure a Raspberry Pi system.
 
 Postional arguments:
-  -h, --help           Show this help text and exit.
-  -p, --prefix PREFIX  Configure the system under <PREFIX> instead of the
-                       current system.
+  -h, --help      Show this help text and exit.
+  -o, --root DIR  Configure the system under <DIR> instead of the current
+                  system.
 EOF
 }
 
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)
-PREFIX=
+ROOT_DIR=
 
 while [ "${#}" -gt 0 ] ; do
 	case "${1}" in
@@ -172,9 +185,9 @@ while [ "${#}" -gt 0 ] ; do
 			usage
 			exit
 			;;
-		-p|--prefix)
+		-o|--root)
 			shift
-			PREFIX=${1}
+			ROOT_DIR=${1}
 			;;
 		*)
 			echo "-- Invalid argument: ${1}" >&2
@@ -186,24 +199,20 @@ done
 
 trap out EXIT INT TERM HUP
 
-BOOT_DIR=${PREFIX}/boot/firmware
-if ! [ -d "${BOOT_DIR}" ] ; then
-	echo "-- No such boot directory: ${BOOT_DIR}"
+if [ -d "${ROOT_DIR}"/boot/firmware ] ; then
+	BOOT_DIR=${ROOT_DIR}/boot/firmware
+elif  [ -d "${ROOT_DIR}"/boot ] ; then
+	BOOT_DIR=${ROOT_DIR}/boot
+else
+	echo "-- No such boot directories: ${ROOT_DIR}/boot{/firmware,}" >&2
 	exit 1
 fi
 
-# Purge cloud-init cruft
-cat << EOF > "${BOOT_DIR}"/user-data
-#cloud-config
-EOF
-
+set_cloud_init_config
 install_tools
 set_hostname
 set_kernel_cmdline
-
 add_user ubuntu bottle-pi
-
 set_service enable ssh
 set_service disable unattended-upgrades
-
 enable_wifi

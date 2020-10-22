@@ -5,10 +5,18 @@
 
 function out()
 {
-	if [ -n "${PREFIX}" ] ; then
-		partumount "${PREFIX}"/boot/firmware
-		partumount "${PREFIX}"
+	rc=$?
+
+	if [ -n "${BOOT_DIR}" ] ; then
+		partumount "${BOOT_DIR}"
 	fi
+	if [ -n "${ROOT_DIR}" ] ; then
+		partumount "${ROOT_DIR}"
+	fi
+
+	if [ "${rc}" -ne 0 ] ; then
+        echo "-- Script failed" >&2
+    fi
 }
 
 function usage()
@@ -43,7 +51,7 @@ while [ "${#}" -gt 0 ] ; do
 			if [ -z "${image}" ] ; then
 				image=${1}
 			else
-				echo "Invalid argument: ${1}" >&2
+				echo "-- Invalid argument: ${1}" >&2
 				exit 2
 			fi
 			;;
@@ -64,35 +72,62 @@ case "${image}" in
 		echo "-- Decompress image"
 		xzcat "${image}" > "${outfile}"
 		;;
+	*.img.zip)
+		# Check the number of files in the zipped image
+		num_files=$(zipinfo -1 "${image}" | wc -l)
+		if [ "${num_files}" -ne 1 ] ; then
+			echo "-- Invalid number of zipped files: ${num_files}" >&2
+			exit 1
+		fi
+		echo "-- Unzip image"
+		unzip -p "${image}" > "${outfile}"
+		;;
 	*.img)
 		echo "-- Copy image"
 		cp "${image}" "${outfile}"
 		;;
 	*)
-		echo "Unsupported image file format" >&2
+		echo "-- Unsupported image file format" >&2
 		exit 1
 		;;
 esac
 
-PREFIX=
+ROOT_DIR=
+BOOT_DIR=
 trap out EXIT INT TERM HUP
 
-PREFIX=$(partmount -b "${outfile}" 2)
-partmount "${outfile}" 1 "${PREFIX}"/boot/firmware
+# Mount the root partition
+ROOT_DIR=$(partmount -b "${outfile}" 2)
 
+# Mount the boot partition
+if [ -d "${ROOT_DIR}"/boot/firmware ] ; then
+	boot_dir=${ROOT_DIR}/boot/firmware
+elif [ -d "${ROOT_DIR}"/boot ] ; then
+	boot_dir=${ROOT_DIR}/boot
+else
+	echo "-- No such boot directories: ${ROOT_DIR}/boot{/firmware,}" >&2
+	exit 1
+fi
+BOOT_DIR=$(partmount -b "${outfile}" 1 "${boot_dir}")
+
+# Install the Raspberry Pi installer and configure the system
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)
-sudo "${here}"/rpi-install -p "${PREFIX}"
-sudo "${here}"/rpi-config -p "${PREFIX}"
+sudo "${here}"/rpi-install --root "${ROOT_DIR}"
+sudo "${here}"/rpi-config --root "${ROOT_DIR}"
 
+# Enter debug mode if requested
 if [ "${debug}" -eq 1 ] ; then
 	echo "-- Enter debug mode (type 'exit' to continue)"
-	sudo chroot "${PREFIX}"
+	sudo chroot "${ROOT_DIR}"
 fi
 
-partumount "${PREFIX}"/boot/firmware
-partumount "${PREFIX}"
-PREFIX=
+# Unmount the partitions
+partumount "${BOOT_DIR}"
+BOOT_DIR=
+partumount "${ROOT_DIR}"
+ROOT_DIR=
 
+# Gzip the image
 echo "-- Compress image"
 gzip -f -S .gz "${outfile}"
 
