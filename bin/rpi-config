@@ -38,28 +38,27 @@ function install_tools()
 
 function set_hostname()
 {
-	echo "-- Set the hostname"
+	echo "-- Set hostname"
 
 	cp "${HERE}"/../etc/rpi-hostname.service "${ROOT_DIR}"/etc/systemd/system/
 	systemctl --root="${ROOT_DIR}" enable rpi-hostname.service
 }
 
-function set_kernel_cmdline()
+function set_console()
 {
 	local cmdline opts opt
-	echo "-- Set the kernel commandline"
+	echo "-- Set console (${*})"
 
     cmdline=()
     readarray -t opts < <(head -1 "${BOOT_DIR}"/cmdline.txt | tr ' ' '\n')
     for opt in "${opts[@]}" ; do
         case "${opt}" in
-            console=*|quiet) ;;        # Drop the option
+            console=*) ;;              # Drop the option
             *) cmdline+=("${opt}") ;;  # Keep the option
         esac
     done
     # cmdline+=("earlycon=pl011,0xfe201000") # This option might break boot
-    cmdline+=("console=tty1" "console=ttyAMA0,115200")
-    echo "${cmdline[*]}" > "${BOOT_DIR}"/cmdline.txt
+    echo "${cmdline[*]} ${*}" > "${BOOT_DIR}"/cmdline.txt
 
 	# Update config.txt
     sed -i '/^# rpi-config$/,+2d' "${BOOT_DIR}"/config.txt
@@ -76,6 +75,26 @@ LINUX_KERNEL_CMDLINE=
 LINUX_KERNEL_CMDLINE_DEFAULTS=
 EOF
 	fi
+}
+
+function set_kernel_loglevel()
+{
+	local cmdline opts opt
+
+	echo "-- Set kernel loglevel (${1})"
+
+	cmdline=()
+	readarray -t opts < <(head -1 "${BOOT_DIR}"/cmdline.txt | tr ' ' '\n')
+	for opt in "${opts[@]}" ; do
+		case "${opt}" in
+			loglevel=*|ignore_loglevel|quiet) ;;  # Drop the option
+			*) cmdline+=("${opt}") ;;             # Keep the option
+		esac
+	done
+	echo "${cmdline[*]} loglevel=${1}" > "${BOOT_DIR}"/cmdline.txt
+
+	sed -i -E 's/^(kernel\.printk[ =])/# rpi-config \1/' \
+		"${ROOT_DIR}"/etc/sysctl.d/*.conf
 }
 
 function add_user()
@@ -220,8 +239,9 @@ fi
 set_cloud_init_config
 install_tools
 set_hostname
-set_kernel_cmdline
-add_user ubuntu bottle-pi
-set_service enable ssh
-set_service disable unattended-upgrades
+set_console "console=tty1" "console=ttyAMA0,115200"
+set_kernel_loglevel "8"
+add_user "ubuntu" "bottle-pi"
+set_service "enable" "ssh"
+set_service "disable" "unattended-upgrades"
 enable_wifi
