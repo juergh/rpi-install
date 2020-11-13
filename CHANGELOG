@@ -1,3 +1,17 @@
+v0.0.3
+  * init: Support the new bottle-pi API
+  * user-data is no longer required
+  * rpi-config: Set the kernel loglevel
+  * rpi-config: Enable wifi on Raspberry Pi OS
+  * Add support for managing Raspberry Pi OS images
+  * init: Fix shellcheck warnings
+  * rpi-config: Fix the netplan wlan0 yaml filename
+  * rpi-install: Bail out if an invalid argument is provided
+  * rpi-hostname: Don't treat it as an error if the hostname is already set
+  * rpi-prep: Always compress the prepared image
+  * rpi-config: Misc fixes
+  * rpi-prep: Add -d, --debug commandline argument
+  * rpi-hostname.service: Add missing argument to set the hostname
 v0.0.2
   * Add rpi-hostname.service
   * rpi-config: Fix bottle-pi username
