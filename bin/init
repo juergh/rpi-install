@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-# Download and install a Raspberry Pi image
+# Download and install a Raspberry Pi image from a Redfish API server
 #
 
-BOTTLE_PI=192.168.99.11:5000
+REDFISH_HOST=192.168.99.11:5000
 
-echo "--- Running installer"
+echo "-- Run installer"
 
 [ -d /dev ] || mkdir -m 0755 /dev
 [ -d /root ] || mkdir -m 0700 /root
@@ -21,7 +21,7 @@ mount -t devtmpfs -o nosuid,mode=0755 udev /dev
 mkdir /dev/pts
 mount -t devpts -o noexec,nosuid,gid=5,mode=0620 devpts /dev/pts || true
 
-echo "--- Waiting for /dev/mmcblk0p1"
+echo "-- Wait for /dev/mmcblk0p1"
 # shellcheck disable=SC2034
 for i in $(seq 10) ; do
 	[ -b /dev/mmcblk0p1 ] && break
@@ -35,22 +35,49 @@ if mount /dev/mmcblk0p1 /boot ; then
 	umount /boot
 fi
 
-echo "--- Waiting for a network device"
+echo "-- Wait for a network device"
 # shellcheck disable=SC2034
 for i in $(seq 10) ; do
 	[ -e /sys/class/net/eth0 ] && break
-	[ -e /sys/class/net/wlan0 ] && break
 	sleep .5
 done
 
 # Get an IP
 dhclient
 
+echo "-- Query Redfish host ${REDFISH_HOST}"
+# shellcheck disable=SC2002
+serial=$(cat /proc/device-tree/serial-number | tr -d '\0\n')
+data=$(wget -q -O - "http://${REDFISH_HOST}/redfish/v1/Systems/${serial}/Actions/ComputerSystem.Update" | \
+	   tr -d '\n' | \
+	   sed 's,":\s*",":",g')
+# Extract the update status from the reponse
+status=${data#*\"Status\":\"}
+status=${status%%\"*}
+if [ "${status}" = "Pending" ] ; then
+	# Extract the Image name from the respone
+	image=${data#*\"Image\":\"}
+	image=${image%%\"*}
+	if [ -n "${image}" ] ; then
+		# Clear the pending update
+		wget -q -O - "http://${REDFISH_HOST}/redfish/v1/Systems/${serial}/Actions/ComputerSystem.Update.Delete"
+	fi
+fi
+
 # Run the interactive installer
 while true ; do
+	if [ -n "${image}" ] ; then
+		image_url="http://${REDFISH_HOST}${image}"
+		echo "-- Install image ${image_url}"
+		if wget -O - "${image_url}" | gunzip -c > /dev/mmcblk0 ; then
+			sync
+			reboot -f
+		fi
+	fi
+
 	cat <<__EOF__
 
---- Select an image to install
+-- Select an image to install
 
       1) Groovy - arm64
       2) Groovy - armhf
@@ -71,42 +98,40 @@ while true ; do
 
      90) Run a shell
      91) Enter an image name manually
-     92) Update the installer
      99) Reboot
 
 __EOF__
 
 	# shellcheck disable=SC2039
-	echo -n "--- Choice: "
+	echo -n "-- Choice: "
 	read -r tmp
 
-	image=
 	case "${tmp}" in
 		#
 		# Ubuntu Server
 		#
-		1) image=ubuntu-groovy-arm64 ;;
-		2) image=ubuntu-groovy-armhf ;;
-		3) image=ubuntu-focal-arm64 ;;
-		4) image=ubuntu-focal-armhf ;;
-		5) image=ubuntu-bionic-arm64 ;;
-		6) image=ubuntu-bionic-armhf ;;
+		1) image=/redfish/v1/Images/ubuntu-groovy-arm64 ;;
+		2) image=/redfish/v1/Images/ubuntu-groovy-armhf ;;
+		3) image=/redfish/v1/Images/ubuntu-focal-arm64  ;;
+		4) image=/redfish/v1/Images/ubuntu-focal-armhf  ;;
+		5) image=/redfish/v1/Images/ubuntu-bionic-arm64 ;;
+		6) image=/redfish/v1/Images/ubuntu-bionic-armhf ;;
 
 		#
 		# Ubuntu Core
 		#
-		10) image=ubuntu-core20-arm64 ;;
-		11) image=ubuntu-core20-armhf ;;
-		12) image=ubuntu-core18-arm64 ;;
-		13) image=ubuntu-core18-armhf ;;
-		14) image=ubuntu-core16-arm64 ;;
-		15) image=ubuntu-core16-armhf ;;
+		10) image=/redfish/v1/Images/ubuntu-core20-arm64 ;;
+		11) image=/redfish/v1/Images/ubuntu-core20-armhf ;;
+		12) image=/redfish/v1/Images/ubuntu-core18-arm64 ;;
+		13) image=/redfish/v1/Images/ubuntu-core18-armhf ;;
+		14) image=/redfish/v1/Images/ubuntu-core16-arm64 ;;
+		15) image=/redfish/v1/Images/ubuntu-core16-armhf ;;
 
 		#
 		# Raspberry Pi OS
 		#
-		20) image=raspios-lite-arm64 ;;
-		21) image=raspios-lite-armhf ;;
+		20) image=/redfish/v1/Images/raspios-lite-arm64 ;;
+		21) image=/redfish/v1/Images/raspios-lite-armhf ;;
 
 		#
 		# Misc options
@@ -116,15 +141,8 @@ __EOF__
 			;;
 		91)
 			# shellcheck disable=SC2039
-			echo -n "--- Image name: "
+			echo -n "-- Image name: "
 			read -r image
-			;;
-		92)
-			if mount /dev/mmcblk0p1 /boot ; then
-				rpi-install
-				sync
-				umount /boot
-			fi
 			;;
 		99)
 			sync
@@ -137,13 +155,4 @@ __EOF__
 		*)
 			;;
 	esac
-
-	if [ -n "${image}" ] ; then
-		echo "--- Installing ${image}"
-		if wget -O - "${BOTTLE_PI}/redfish/v1/Images/${image}" | \
-				gunzip -c > /dev/mmcblk0 ; then
-			sync
-			reboot -f
-		fi
-	fi
 done
