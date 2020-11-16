@@ -99,7 +99,7 @@ function set_kernel_loglevel()
 
 function add_user()
 {
-	local user
+	local user pubkey
 
 	echo "-- Add user"
 
@@ -116,13 +116,16 @@ function add_user()
 EOF
 		chmod 440 "${ROOT_DIR}"/etc/sudoers.d/"${user}"
 
-#		pubkey=${HERE}/ssh/${user}.pubkey
-#		if -e [ "${pubkey}" ] ; then
-#			sshdir=${ROOT_DIR}/home/${user}/.ssh
-#			mkdir -p -m 700 "${sshdir}"
-#			cat "${pubkey}" >> "${sshdir}"/authorized_keys
-#			chmod 600 "${sshdir}"/authorized_keys
-#		fi
+		# Copy the SSH public key
+		pubkey=${HERE}/../ssh/${user}.pubkey
+		if [ -e "${pubkey}" ] ; then
+			echo "   Import public SSH key for user ${user}"
+			sshdir=${ROOT_DIR}/home/${user}/.ssh
+			mkdir -p -m 700 "${sshdir}"
+			cat "${pubkey}" >> "${sshdir}"/authorized_keys
+			chmod 600 "${sshdir}"/authorized_keys
+			chroot "${ROOT_DIR}" chown -R "${user}":"${user}" /home/"${user}"/.ssh
+		fi
 	done
 }
 
