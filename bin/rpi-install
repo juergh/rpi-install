@@ -15,7 +15,7 @@ out()
 usage()
 {
 	cat <<EOF
-Usage: rpi-install [-h] [-o DIR] [-r] [INSTALLER]
+Usage: rpi-install [-b DIR] [-h] [-r] [INSTALLER]
 
 Install (or reboot into) the Raspberry Pi OS installer.
 
@@ -25,25 +25,26 @@ Positional arguments:
 
 Optional arguments:
   -h, --help      Show this help text and exit.
-  -o, --root DIR  Install the installer to <DIR> instead of /.
+  -b, --boot DIR  Install the installer to <DIR> instead of /boot/ (or
+                  /boot/firmware/).
   -r, --reboot    Reboot into the installer.
 EOF
 }
 
 github_url=https://github.com/juergh/rpi-install
-root_dir=
+boot_dir=
 reboot=0
 installer=
 
 while [ "${#}" -gt 0 ] ; do
 	case "${1}" in
+		-b|--boot)
+			shift
+			boot_dir=${1}
+			;;
 		-h|--help)
 			usage
 			exit
-			;;
-		-o|--root)
-			shift
-			root_dir=${1}
 			;;
 		-r|--reboot)
 			reboot=1
@@ -65,15 +66,19 @@ while [ "${#}" -gt 0 ] ; do
 done
 
 # Find the boot directory
-if [ -e "${root_dir}"/boot/firmware/config.txt ] ; then
-	boot_dir="${root_dir}"/boot/firmware
-elif [ -e "${root_dir}"/boot/config.txt ] ; then
-	boot_dir="${root_dir}"/boot
-else
-	echo "-- No such boot directories: ${root_dir}/boot{/firmware,}" >&2
-	exit 1
+if [ -z "${boot_dir}" ] ; then
+	if [ -d /boot/firmware ] ; then
+		boot_dir=/boot/firmware
+	else
+		boot_dir=/boot
+	fi
 fi
 
+# Verify the boot directory
+if ! [ -e "${boot_dir}"/config.txt ] ; then
+	echo "-- Invalid boot directory; ${boot_dir}" >&2
+	exi t1
+fi
 echo "-- Use boot directory ${boot_dir}"
 
 if [ "${reboot}" -eq 1 ] ; then
