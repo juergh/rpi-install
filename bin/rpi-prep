@@ -96,24 +96,34 @@ ROOT_DIR=
 BOOT_DIR=
 trap out EXIT INT TERM HUP
 
-# Mount the root partition
-ROOT_DIR=$(partmount -b "${outfile}" 2)
-
-# Mount the boot partition
-if [ -d "${ROOT_DIR}"/boot/firmware ] ; then
-	boot_dir=${ROOT_DIR}/boot/firmware
-elif [ -d "${ROOT_DIR}"/boot ] ; then
-	boot_dir=${ROOT_DIR}/boot
+num_parts=$(partx -g "${outfile}" | wc -l)
+if [ "${num_parts}" -eq 1 ] ; then
+	# Mount the boot partition
+	BOOT_DIR=$(partmount -b "${outfile}" 1)
+elif  [ "${num_parts}" -eq 2 ] ; then
+	# Mount the root partition
+	ROOT_DIR=$(partmount -b "${outfile}" 2)
+	# Mount the boot partition
+	if [ -d "${ROOT_DIR}"/boot/firmware ] ; then
+		boot_dir=${ROOT_DIR}/boot/firmware
+	elif [ -d "${ROOT_DIR}"/boot ] ; then
+		boot_dir=${ROOT_DIR}/boot
+	else
+		echo "-- No such boot directory: ${ROOT_DIR}/boot{/firmware,}" >&2
+		exit 1
+	fi
+	BOOT_DIR=$(partmount -b "${outfile}" 1 "${boot_dir}")
 else
-	echo "-- No such boot directories: ${ROOT_DIR}/boot{/firmware,}" >&2
-	exit 1
+	echo "-- Unsupported number of partitions: ${num_parts}" >&2
+	exiit 1
 fi
-BOOT_DIR=$(partmount -b "${outfile}" 1 "${boot_dir}")
 
 # Install the Raspberry Pi installer and configure the system
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)
-sudo "${here}"/rpi-install --root "${ROOT_DIR}"
-sudo "${here}"/rpi-config --root "${ROOT_DIR}"
+sudo "${here}"/rpi-install --boot "${BOOT_DIR}"
+if [ -n "${ROOT_DIR}" ] ; then
+	sudo "${here}"/rpi-config --root "${ROOT_DIR}"
+fi
 
 # Enter debug mode if requested
 if [ "${debug}" -eq 1 ] ; then
@@ -124,8 +134,10 @@ fi
 # Unmount the partitions
 partumount "${BOOT_DIR}"
 BOOT_DIR=
-partumount "${ROOT_DIR}"
-ROOT_DIR=
+if [ -n "${ROOT_DIR}" ] ; then
+	partumount "${ROOT_DIR}"
+	ROOT_DIR=
+fi
 
 # Gzip the image
 echo "-- Compress image"
