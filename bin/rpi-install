@@ -24,9 +24,9 @@ Positional arguments:
                   the installer tarball from github.
 
 Optional arguments:
-  -h, --help      Show this help text and exit.
   -b, --boot DIR  Install the installer to <DIR> instead of /boot/ (or
                   /boot/firmware/).
+  -h, --help      Show this help text and exit.
   -r, --reboot    Reboot into the installer.
 EOF
 }
