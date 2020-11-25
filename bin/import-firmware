@@ -1,0 +1,127 @@
+#!/bin/bash -eu
+#
+# Import 'firmware' from a preinstalled Ubuntu armhf raspi image
+#
+
+function out()
+{
+	local rc=${?}
+
+	if [ -n "${MOUNTD}" ] ; then
+		partumount -s "${MOUNTD}"/boot/firmware || true
+		partumount -s "${MOUNTD}" || true
+	fi
+
+	if [ -n "${IMAGE}" ] ; then
+		rm -f "${IMAGE}"
+	fi
+
+	if [ "${rc}" -ne 0 ] ; then
+		echo "Script failed" >&2
+	fi
+}
+
+function find_so()
+{
+	local root=${1} bin=${2}
+
+	echo "${bin}"
+
+	while IFS= read -r line ; do
+		so=${line%\]*}
+		so=${so##*\[}
+
+		for libdir in /lib/arm-linux-gnueabihf /usr/lib/arm-linux-gnueabihf ; do
+			bin=${libdir}/${so}
+			if [ -e "${root}/${bin}" ] ; then
+				find_so "${root}" "${bin}"
+				break
+			fi
+		done
+	done < <(arm-linux-gnueabihf-readelf -d "${root}/${bin}" | \
+				 grep ' Shared library: ')
+}
+
+function usage()
+{
+	cat <<EOF
+Usage: import-firmware [-h] IMAGE
+
+Import firmware binaries and libraries from the provided IMAGE.
+
+IMAGE         An Ubuntu raspi preinstalled armhf server image.
+
+Optional arguments:
+  -h, --help  Show this help text and exit.
+EOF
+}
+
+image=
+
+while [ "${#}" -gt 0 ] ; do
+	case "${1}" in
+		-h|--help)
+			usage
+			exit
+			;;
+		*)
+			if [ -z "${image}" ] ; then
+				image=${1}
+			else
+				echo "-- Invalid argument: ${1}" >&2
+				exit 2
+			fi
+			;;
+	esac
+	shift
+done
+
+if [ -z "${image}" ] ; then
+	usage
+	exit 2
+fi
+
+if ! [ -d firmware ] ; then
+	echo "-- No such directory: ./firmware" >&2
+	exit 2
+fi
+
+MOUNTD=
+IMAGE=
+trap out EXIT INT TERM HUP
+
+# Uncommpress the image to a temporary location
+if [ "${image%.xz}" != "${image}" ] ; then
+	echo "-- Decompress image"
+	IMAGE=$(mktemp)
+	xzcat "${image}" > "${IMAGE}"
+	image=${IMAGE}
+fi
+
+MOUNTD=$(partmount -s "${image}" 2)
+partmount "${image}" 1 "${MOUNTD}"/boot/firmware > /dev/null
+
+echo "-- Partitions mounted on ${MOUNTD}"
+
+# Copy boot/firmware files
+rm -f firmware/boot/firmware/*.dtb
+cp "${MOUNTD}"/boot/firmware/{*.dtb,initrd.img,vmlinuz} \
+   firmware/boot/firmware/
+
+echo "-- Copy additional binaries and libraries"
+
+rm -rf firmware/{lib,usr}
+bins=(
+	/usr/bin/tar
+	/usr/bin/curl
+	/usr/sbin/wpa_supplicant
+)
+for bin in "${bins[@]}" ; do
+	while IFS= read -r b ; do
+		if ! [ -e firmware/"${b}" ] ; then
+			echo "--   ${b}"
+			mkdir -p firmware/"${b%/*}"
+			cp "${MOUNTD}/${b}" firmware/"${b}"
+		fi
+	done <  <(find_so "${MOUNTD}" "${bin}" | sort -u)
+done
