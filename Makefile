@@ -6,18 +6,21 @@ DATE_EPOCH = '1970-01-01 00:00:00 GMT'
 
 all: release/rpi-install.tgz
 
+initrd: buildd/initrd.img
+
 # Unpack the firmware initrd and inject all the bits and pieces that turns it
 # into an installer initrd
 buildd/initrdd:
 	rm -rf $@/
 	mkdir -p $@/
-	cd  $@ && lz4cat $(ROOTDIR)/firmware/boot/firmware/initrd.img | cpio -i
+	cd $@ && lz4cat $(ROOTDIR)/firmware/boot/firmware/initrd.img | cpio -i
 	# Copy the installer init
 	cp bin/init $@/
-	# Copy additional binaries required by the installer
-	cp -r firmware/usr/* $@/usr/
-	cp bin/rpi-install $@/usr/bin/
-	# Remove unnecessary files
+	# Copy additional firmware binaries and libraries required by the
+	# installer
+	rsync --verbose --archive --ignore-existing --exclude '/README' \
+	    --exclude '/boot/' firmware/ $@/
+	# Remove unnecessary files to shrink the size of the initrd
 	rm -rf $@/lib/firmware $@/lib/modules
 
 # Rebuild the installer initrd
