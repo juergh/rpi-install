@@ -45,11 +45,13 @@ function find_so()
 function usage()
 {
 	cat <<EOF
-Usage: import-firmware [-h] IMAGE
+Usage: import-firmware [-h] IMAGE|DIR
 
 Import firmware binaries and libraries from the provided IMAGE.
 
 IMAGE         An Ubuntu raspi preinstalled armhf server image.
+DIR           A directory where an Ubuntu raspi preinstalled armhf server image
+              is mounted.
 
 Optional arguments:
   -h, --help  Show this help text and exit.
@@ -90,22 +92,30 @@ MOUNTD=
 IMAGE=
 trap out EXIT INT TERM HUP
 
-# Uncommpress the image to a temporary location
-if [ "${image%.xz}" != "${image}" ] ; then
-	echo "-- Decompress image"
-	IMAGE=$(mktemp)
-	xzcat "${image}" > "${IMAGE}"
-	image=${IMAGE}
+if [ -d "${image}" ] ; then
+	# Assume it's an already mounted image
+	rootd=${image}
+else
+	# Decommpress the image to a temporary location
+	if [ "${image%.xz}" != "${image}" ] ; then
+		echo "-- Decompress image"
+		IMAGE=$(mktemp)
+		xzcat "${image}" > "${IMAGE}"
+		image=${IMAGE}
+	fi
+
+	# Mount the image
+	MOUNTD=$(partmount -s "${image}" 2)
+	partmount "${image}" 1 "${MOUNTD}"/boot/firmware > /dev/null
+	rootd=${MOUNTD}
+
+	echo "-- Image partitions mounted on ${MOUNTD}"
 fi
 
-MOUNTD=$(partmount -s "${image}" 2)
-partmount "${image}" 1 "${MOUNTD}"/boot/firmware > /dev/null
+echo "-- Copy kernel, initrd and DTBs"
 
-echo "-- Partitions mounted on ${MOUNTD}"
-
-# Copy boot/firmware files
 rm -f firmware/boot/firmware/*.dtb
-cp "${MOUNTD}"/boot/firmware/{*.dtb,initrd.img,vmlinuz} \
+cp "${rootd}"/boot/firmware/{*.dtb,initrd.img,vmlinuz} \
    firmware/boot/firmware/
 
 echo "-- Copy additional binaries and libraries"
@@ -113,7 +123,6 @@ echo "-- Copy additional binaries and libraries"
 rm -rf firmware/{lib,usr}
 bins=(
 	/usr/bin/tar
-	/usr/bin/curl
 	/usr/sbin/wpa_supplicant
 )
 for bin in "${bins[@]}" ; do
@@ -121,7 +130,39 @@ for bin in "${bins[@]}" ; do
 		if ! [ -e firmware/"${b}" ] ; then
 			echo "--   ${b}"
 			mkdir -p firmware/"${b%/*}"
-			cp "${MOUNTD}/${b}" firmware/"${b}"
+			cp "${rootd}/${b}" firmware/"${b}"
 		fi
-	done <  <(find_so "${MOUNTD}" "${bin}" | sort -u)
+	done <  <(find_so "${rootd}" "${bin}" | sort -u)
+done
+
+echo "-- Copy kernel modules"
+
+mods=(
+	brcmfmac.ko
+	brcmutil.ko
+	cfg80211.ko
+)
+for mod in "${mods[@]}" ; do
+	while IFS= read -r m ; do
+		echo "--   /${m}"
+		mkdir -p firmware/"${m%/*}"
+		cp "${rootd}/${m}" firmware/"${m}"
+	done < <(cd "${rootd}" && find lib/modules -type f -name "${mod}")
+done
+
+echo "-- Copy firmware binaries"
+
+fws=(
+	brcmfmac43430-sdio.bin
+	brcmfmac43430-sdio.raspberrypi*.txt
+	brcmfmac43455-sdio.bin
+	brcmfmac43455-sdio.clm_blob
+	brcmfmac43455-sdio.raspberrypi*.txt
+)
+for fw in "${fws[@]}" ; do
+	while IFS= read -r f ; do
+		echo "--   /${f}"
+		mkdir -p firmware/"${f%/*}"
+		cp "${rootd}/${f}" firmware/"${f}"
+	done < <(cd "${rootd}" && find lib/firmware -type f -name "${fw}")
 done
