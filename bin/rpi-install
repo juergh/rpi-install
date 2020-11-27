@@ -76,8 +76,8 @@ fi
 
 # Verify the boot directory
 if ! [ -e "${boot_dir}"/config.txt ] ; then
-	echo "-- Invalid boot directory; ${boot_dir}" >&2
-	exi t1
+	echo "-- Invalid boot directory: ${boot_dir}" >&2
+	exit 1
 fi
 echo "-- Use boot directory ${boot_dir}"
 
@@ -126,7 +126,7 @@ include install/config.txt
 EOF
 
 # Create wpa_supplicant.conf if it doesn't exist yet
-conf= "${boot_dir}"/install/wpa_supplicant.conf
+conf="${boot_dir}"/install/wpa_supplicant.conf
 if ! [ -e "${conf}" ] ; then
 	echo "-- Create wpa_supplicant.conf"
 	wifi_ssid=$(pass show local/wifi | grep '^ssid: ')
