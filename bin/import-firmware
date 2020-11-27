@@ -10,6 +10,7 @@ function out()
 	if [ -n "${MOUNTD}" ] ; then
 		partumount -s "${MOUNTD}"/boot/firmware || true
 		partumount -s "${MOUNTD}" || true
+		echo "-- Image partitions unmounted from ${MOUNTD}"
 	fi
 
 	if [ -n "${IMAGE}" ] ; then
@@ -105,8 +106,8 @@ else
 	fi
 
 	# Mount the image
-	MOUNTD=$(partmount -s "${image}" 2)
-	partmount "${image}" 1 "${MOUNTD}"/boot/firmware > /dev/null
+	MOUNTD=$(partmount -ro -s "${image}" 2)
+	partmount -ro "${image}" 1 "${MOUNTD}"/boot/firmware > /dev/null
 	rootd=${MOUNTD}
 
 	echo "-- Image partitions mounted on ${MOUNTD}"
