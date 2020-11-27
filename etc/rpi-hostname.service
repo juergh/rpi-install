@@ -1,8 +1,9 @@
 [Unit]
 Description=Set the Raspberry Pi hostname
 DefaultDependencies=no
-Before=network-pre.target
 Wants=network-pre.target
+Before=network-pre.target
+After=systemd-remount-fs.service
 
 [Service]
 Type=oneshot
