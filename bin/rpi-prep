@@ -22,12 +22,14 @@ function out()
 function usage()
 {
 	cat << EOF
-Usage: rpi-prep [-d] [-h] IMAGE
+Usage: rpi-prep [-d] [-h] IMAGE [INSTALLER]
 
 Prepare a Raspberry Pi image.
 
 Positional arguments:
   IMAGE        The image to prepare.
+  INSTALLER    The installer tarball. If not provided, download and install
+               the installer tarball from github.
 
 Optional arguments:
   -d, --debug  Enable debug mode.
@@ -37,6 +39,7 @@ EOF
 
 debug=0
 image=
+installer=
 
 while [ "${#}" -gt 0 ] ; do
 	case "${1}" in
@@ -50,6 +53,8 @@ while [ "${#}" -gt 0 ] ; do
 		*)
 			if [ -z "${image}" ] ; then
 				image=${1}
+			elif [ -z "${installer}" ] ; then
+				installer=${1}
 			else
 				echo "-- Invalid argument: ${1}" >&2
 				exit 2
@@ -62,6 +67,11 @@ done
 if [ -z "${image}" ] ; then
 	usage
 	exit 2
+fi
+
+if [ -n "${installer}" ] && ! [ -e "${installer}" ] ; then
+	echo "No such installer: ${installer}"
+	exit 1
 fi
 
 outfile=${image##*/}
@@ -115,12 +125,19 @@ elif  [ "${num_parts}" -eq 2 ] ; then
 	BOOT_DIR=$(partmount -s "${outfile}" 1 "${boot_dir}")
 else
 	echo "-- Unsupported number of partitions: ${num_parts}" >&2
-	exiit 1
+	exit 1
 fi
 
-# Install the Raspberry Pi installer and configure the system
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)
-sudo "${here}"/rpi-install --boot "${BOOT_DIR}"
+
+# Install the Raspberry Pi installer
+opts=()
+if [ -n "${installer}" ] ; then
+	opts+=("${installer}")
+fi
+sudo "${here}"/rpi-install --boot "${BOOT_DIR}" "${opts[@]}"
+
+# Configure the system
 if [ -n "${ROOT_DIR}" ] ; then
 	sudo "${here}"/rpi-config --root "${ROOT_DIR}"
 fi
