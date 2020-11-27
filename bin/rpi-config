@@ -119,7 +119,7 @@ EOF
 		# Copy the SSH public key
 		pubkey=${HERE}/../ssh/${user}.pubkey
 		if [ -e "${pubkey}" ] ; then
-			echo "   Import public SSH key for user ${user}"
+			echo "--     Import public SSH key"
 			sshdir=${ROOT_DIR}/home/${user}/.ssh
 			mkdir -p -m 700 "${sshdir}"
 			cat "${pubkey}" >> "${sshdir}"/authorized_keys
@@ -144,7 +144,7 @@ function set_service()
 
 		# Enable pwauth for ssh
 		if [ "${action}" = "enable" ] && [ "${service}" = "ssh" ] ; then
-			echo "--   Enable password authentication for ssh"
+			echo "--     Enable password authentication"
 			sed -i 's/^PasswordAuthentication/# rpi-config PasswordAuthentication/' \
 				"${ROOT_DIR}"/etc/ssh/sshd_config
 			sed -i '/^# rpi-config$/,+1d' "${ROOT_DIR}"/etc/ssh/sshd_config
