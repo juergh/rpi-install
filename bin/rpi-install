@@ -124,3 +124,22 @@ cat << EOF >> "${boot_dir}"/config.txt
 [gpio4=0]
 include install/config.txt
 EOF
+
+# Create wpa_supplicant.conf if it doesn't exist yet
+conf= "${boot_dir}"/install/wpa_supplicant.conf
+if ! [ -e "${conf}" ] ; then
+	echo "-- Create wpa_supplicant.conf"
+	wifi_ssid=$(pass show local/wifi | grep '^ssid: ')
+	wifi_ssid=${wifi_ssid#* }
+	wifi_psk=$(pass show local/wifi | grep '^passphrase: ')
+	wifi_psk=${wifi_psk#* }
+	cat << EOF > "${conf}"
+ctrl_interface=/run/wpa_supplicant
+network={
+  ssid="${wifi_ssid}"
+  key_mgmt=WPA-PSK
+  psk="${wifi_psk}"
+}
+EOF
+	chmod 600 "${conf}"
+fi

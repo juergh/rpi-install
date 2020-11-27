@@ -28,21 +28,46 @@ for i in $(seq 10) ; do
     sleep .5
 done
 
-# Clear the one-time boot flag
+echo "-- Mount /dev/mmcblk0p1"
 if mount /dev/mmcblk0p1 /boot ; then
+	# Clear the one-time boot flag
 	sed -i 's,^# rpi-install ONCE ,,' /boot/config.txt
+
+	# Copy wpa_supplicant.conf
+	cp /boot/install/wpa_supplicant.conf /etc/
+
+	echo "-- Unmount /dev/mmcblk0p1"
 	sync
 	umount /boot
 fi
 
-echo "-- Wait for a network device"
+echo "-- Wait for /sys/class/net/eth0"
 # shellcheck disable=SC2034
-for i in $(seq 10) ; do
+for i in $(seq 5) ; do
 	[ -e /sys/class/net/eth0 ] && break
 	sleep .5
 done
 
-# Get an IP
+if ! [ -e /sys/class/net/eth0 ] ; then
+	echo "-- Load wifi modules"
+	if ! [ -e /usr/sbin/depmod ] ; then
+		ln -s /bin/kmod /usr/sbin/depmod
+	fi
+	depmod -a
+	modprobe brcmfmac
+
+	echo "-- Wait for /sys/class/net/wlan0"
+	# shellcheck disable=SC2034
+	for i in $(seq 5) ; do
+		[ -e /sys/class/net/wlan0 ] && break
+		sleep .5
+	done
+
+	echo "-- Connect to wifi"
+	wpa_supplicant -B -c /etc/wpa_supplicant.conf -i wlan0
+fi
+
+echo "-- Get an IP"
 dhclient
 
 echo "-- Query Redfish host ${REDFISH_HOST}"
