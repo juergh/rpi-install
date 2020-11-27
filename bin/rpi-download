@@ -15,17 +15,35 @@ function out()
 function download_image()
 {
 	local base_url=${1} remote_image=${2} local_image=${3:-}
+	local sha256_file sha256_sum
 
 	if [ -z "${local_image}" ] ; then
 		local_image=${remote_image}
 	fi
 
-	# Check if the remote image exists
-	curl --fail --head "${base_url}${remote_image}" >/dev/null 2>&1 || \
-		return 1
+	echo "-- Trying ${base_url}"
+
+	# Check if a download is necessary
+	sha256_file=${local_image}.sha256sum
+	if [ -e "${local_image}" ] && [ -e "${sha256_file}" ] && \
+		   curl --fail --head "${base_url}"/SHA256SUMS >/dev/null 2>&1 ; then
+		sha256_sum=$(awk '{ print $1 }' "${sha256_file}")
+		if [ -n "${sha256_sum}" ] && \
+			   curl --fail --no-progress-meter "${base_url}"/SHA256SUMS | \
+				   grep -q "${sha256_sum}" ; then
+			echo "-- Image is up-to-date: ${image}"
+			return 0
+		fi
+	fi
 
 	# Download the image
-	wget -O "${local_image}" "${base_url}${remote_image}"
+	curl --fail --head "${base_url}/${remote_image}" >/dev/null 2>&1 || return 1
+	wget -O "${local_image}" "${base_url}/${remote_image}" || return 1
+
+	# Create the sha256sum file
+	sha256sum "${local_image}" > "${sha256_file}" || return 1
+
+	echo "-- Downloaded image ${local_image}"
 }
 
 function usage()
@@ -161,5 +179,3 @@ case "${series}" in
 		;;
 
 esac
-
-echo "-- Downloaded image ${image}"
