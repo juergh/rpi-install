@@ -19,6 +19,12 @@ function download_image()
 	if [ -z "${local_image}" ] ; then
 		local_image=${remote_image}
 	fi
+
+	# Check if the remote image exists
+	curl --fail --head "${base_url}${remote_image}" >/dev/null 2>&1 || \
+		return 1
+
+	# Download the image
 	wget -O "${local_image}" "${base_url}${remote_image}"
 }
 
