@@ -14,14 +14,13 @@ buildd/initrdd:
 	rm -rf $@/
 	mkdir -p $@/
 	cd $@ && lz4cat $(ROOTDIR)/firmware/boot/firmware/initrd.img | cpio -i
-	# Copy the installer init
-	cp bin/init $@/
-	# Copy additional firmware binaries and libraries required by the
-	# installer
-	rsync --verbose --archive --ignore-existing --exclude '/README' \
-	    --exclude '/boot/' firmware/ $@/
 	# Remove unnecessary files to shrink the size of the initrd
 	rm -rf $@/lib/firmware $@/lib/modules
+	# Copy the installer init
+	cp bin/init $@/
+	# Copy additional binaries and libraries required by the installer
+	rsync --verbose --archive --ignore-existing --exclude '/README' \
+	    --exclude '/boot/' firmware/ $@/
 
 # Rebuild the installer initrd
 buildd/initrd.img: buildd/initrdd
