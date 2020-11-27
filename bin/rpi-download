@@ -12,6 +12,16 @@ function out()
 	fi
 }
 
+function download_image()
+{
+	local base_url=${1} remote_image=${2} local_image=${3:-}
+
+	if [ -z "${local_image}" ] ; then
+		local_image=${remote_image}
+	fi
+	wget -O "${local_image}" "${base_url}${remote_image}"
+}
+
 function usage()
 {
 	cat <<EOF
@@ -81,21 +91,21 @@ esac
 
 case "${series}" in
 
-	# Ubuntu classic LTS
+	# Ubuntu Classic
 	bionic|focal|groovy|hirsute)
 		image=${series}-preinstalled-server-${arch}+${flavor}.img.xz
-		daily_devel_url=http://cdimage.ubuntu.com/ubuntu-server/daily-preinstalled/current/${image}
-		daily_url=http://cdimage.ubuntu.com/ubuntu-server/${series}/daily-preinstalled/current/${image}
+		daily_devel_url=http://cdimage.ubuntu.com/ubuntu-server/daily-preinstalled/current/
+		daily_url=http://cdimage.ubuntu.com/ubuntu-server/${series}/daily-preinstalled/current/
 		release_image_pattern="ubuntu-.*?-preinstalled-server-${arch}\+${flavor}\.img\.xz"
 		release_url=http://cdimage.ubuntu.com/releases/${series}/release/
 
 		done=0
 		if [ "${release}" -eq 0 ] ; then
 			# Download the daily devel image
-			wget -O "${image}" "${daily_devel_url}" && done=1
+			download_image "${daily_devel_url}" "${image}" && done=1
 			if [ "${done}" -eq 0 ] ; then
 				# Download the daily image
-				wget -O "${image}" "${daily_url}" && done=1
+				download_image "${daily_url}" "${image}" && done=1
 			fi
 		fi
 		if [ "${done}" -eq 0 ] ; then
@@ -105,9 +115,8 @@ case "${series}" in
 				   sort -uV | tail -1)
 			remote_image=${href#href=\"}
 			remote_image=${remote_image%\"}
-			echo $remote_image
 			# Download the latest release image
-			wget -O "${image}" "${release_url}/${remote_image}"
+			download_image "${release_url}" "${remote_image}" "${image}"
 		fi
 		;;
 
@@ -115,17 +124,17 @@ case "${series}" in
 	core18|core20)
 		year=${series#core}
 		image=ubuntu-core-${year}-${arch}+${flavor}.img.xz
-		beta_url=http://cdimage.ubuntu.com/ubuntu-core/${year}/beta/current/${image}
-		stable_url=http://cdimage.ubuntu.com/ubuntu-core/${year}/stable/current/${image}
+		beta_url=http://cdimage.ubuntu.com/ubuntu-core/${year}/beta/current/
+		stable_url=http://cdimage.ubuntu.com/ubuntu-core/${year}/stable/current/
 
 		done=0
 		if [ "${release}" -eq 0 ] ; then
 			# Donwload the beta image
-			wget -O "${image}" "${beta_url}" && done=1
+			download_image "${beta_url}" "${image}" && done=1
 		fi
 		if [ "${done}" -eq 0 ] ; then
 			# Download the stable image
-			wget -O "${image}" "${stable_url}"
+			download_image "${stable_url}" "${image}"
 		fi
 		;;
 
@@ -133,10 +142,10 @@ case "${series}" in
 	raspios)
 		image=raspios-lite-${arch}.img.zip
 		remote_image=raspios_lite_${arch}_latest
-		latest_url=https://downloads.raspberrypi.org/${remote_image}
+		latest_url=https://downloads.raspberrypi.org/
 
 		# Download the latest image
-		wget -O "${image}" "${latest_url}"
+		download_image "${latest_url}" "${image}"
 		;;
 
 	*)
