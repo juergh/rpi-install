@@ -33,6 +33,7 @@ EOF
 
 github_url=https://github.com/juergh/rpi-install
 boot_dir=
+create_wpa_conf=0
 reboot=0
 installer=
 
@@ -41,6 +42,7 @@ while [ "${#}" -gt 0 ] ; do
 		-b|--boot)
 			shift
 			boot_dir=${1}
+			create_wpa_conf=1
 			;;
 		-h|--help)
 			usage
@@ -125,15 +127,15 @@ cat << EOF >> "${boot_dir}"/config.txt
 include install/config.txt
 EOF
 
-# Create wpa_supplicant.conf if it doesn't exist yet
-conf="${boot_dir}"/install/wpa_supplicant.conf
-if ! [ -e "${conf}" ] ; then
+# Create wpa_supplicant.conf
+wpa_conf="${boot_dir}"/install/wpa_supplicant.conf
+if [ "${create_wpa_conf}" -eq 1 ] && ! [ -e "${wpa_conf}" ] ; then
 	echo "-- Create wpa_supplicant.conf"
 	wifi_ssid=$(pass show local/wifi | grep '^ssid: ')
 	wifi_ssid=${wifi_ssid#* }
 	wifi_psk=$(pass show local/wifi | grep '^passphrase: ')
 	wifi_psk=${wifi_psk#* }
-	cat << EOF > "${conf}"
+	cat << EOF > "${wpa_conf}"
 ctrl_interface=/run/wpa_supplicant
 network={
   ssid="${wifi_ssid}"
@@ -141,5 +143,5 @@ network={
   psk="${wifi_psk}"
 }
 EOF
-	chmod 600 "${conf}"
+	chmod 600 "${wpa_conf}"
 fi
