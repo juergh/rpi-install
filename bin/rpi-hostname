@@ -17,7 +17,7 @@ function get_hostname()
 
 	# shellcheck disable=SC2002
 	serial=$(cat /proc/device-tree/serial-number | tr -d '\0\n')
-	serial=${serial::4}
+	serial=${serial: -4}
 
 	echo "rpi-${model}-${serial}"
 }
