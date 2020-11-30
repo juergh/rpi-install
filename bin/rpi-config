@@ -121,6 +121,7 @@ EOF
 		if [ -e "${pubkey}" ] ; then
 			echo "--     Import public SSH key"
 			sshdir=${ROOT_DIR}/home/${user}/.ssh
+			# shellcheck disable=SC2174
 			mkdir -p -m 700 "${sshdir}"
 			cat "${pubkey}" >> "${sshdir}"/authorized_keys
 			chmod 600 "${sshdir}"/authorized_keys
