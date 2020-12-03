@@ -203,7 +203,7 @@ Configure a Raspberry Pi system.
 
 Postional arguments:
   -h, --help      Show this help text and exit.
-  -o, --root DIR  Configure the system under <DIR> instead of the current
+  -r, --root DIR  Configure the system under <DIR> instead of the current
                   system.
 EOF
 }
@@ -217,7 +217,7 @@ while [ "${#}" -gt 0 ] ; do
 			usage
 			exit
 			;;
-		-o|--root)
+		-r|--root)
 			shift
 			ROOT_DIR=${1}
 			;;
