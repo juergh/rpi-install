@@ -10,7 +10,7 @@ function out()
 	umount_all
 
 	if [ "${rc}" -ne 0 ] ; then
-        echo "-- Script failed" >&2
+        echo "** Error: Script failed" >&2
     fi
 }
 
@@ -68,7 +68,7 @@ while [ "${#}" -gt 0 ] ; do
 			elif [ -z "${installer}" ] ; then
 				installer=${1}
 			else
-				echo "-- Invalid argument: ${1}" >&2
+				echo "** Error: Invalid argument: ${1}" >&2
 				exit 2
 			fi
 			;;
@@ -82,12 +82,12 @@ if [ -z "${image}" ] ; then
 fi
 
 if ! [ -e "${image}" ] ; then
-	echo "No such image file: ${image}" >&2
+	echo "** Error: No such image file: ${image}" >&2
 	exit 1
 fi
 
 if [ -n "${installer}" ] && ! [ -e "${installer}" ] ; then
-	echo "No such installer: ${installer}" >&2
+	echo "** Error: No such installer: ${installer}" >&2
 	exit 1
 fi
 
@@ -103,7 +103,7 @@ case "${image}" in
 		# Check the number of files in the zipped image
 		num_files=$(zipinfo -1 "${image}" | wc -l)
 		if [ "${num_files}" -ne 1 ] ; then
-			echo "-- Invalid number of zipped files: ${num_files}" >&2
+			echo "** Error: Invalid number of zipped files: ${num_files}" >&2
 			exit 1
 		fi
 		echo "-- Unzip image"
@@ -114,7 +114,7 @@ case "${image}" in
 		cp "${image}" "${outfile}"
 		;;
 	*)
-		echo "-- Unsupported image file format" >&2
+		echo "** Error: Unsupported image file format" >&2
 		exit 1
 		;;
 esac
@@ -137,13 +137,13 @@ elif  [ "${num_parts}" -eq 2 ] ; then
 	elif [ -d "${ROOT_DIR}"/boot ] ; then
 		boot_dir=${ROOT_DIR}/boot
 	else
-		echo "-- No such boot directory: ${ROOT_DIR}/boot{/firmware,}" >&2
+		echo "** Error: No such boot directory: ${ROOT_DIR}/boot{/firmware,}" >&2
 		exit 1
 	fi
 	BOOT_DIR=$(partmount -s "${outfile}" 1 "${boot_dir}")
 	echo "-- Image partitions mounted on ${ROOT_DIR}"
 else
-	echo "-- Unsupported number of partitions: ${num_parts}" >&2
+	echo "** Error: Unsupported number of partitions: ${num_parts}" >&2
 	exit 1
 fi
 

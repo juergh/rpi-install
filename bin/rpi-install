@@ -8,7 +8,7 @@ out()
 	rc=$?
 
 	if [ "${rc}" -ne 0 ] ; then
-		echo "-- Script failed" >&2
+		echo "** Error: Script failed" >&2
 	fi
 }
 
@@ -52,14 +52,14 @@ while [ "${#}" -gt 0 ] ; do
 			reboot=1
 			;;
 		-*)
-			echo "-- Invalid argument: ${1}" >&2
+			echo "** Error: Invalid argument: ${1}" >&2
 			exit 1
 			;;
 		*)
 			if [ -z "${installer}" ] ; then
 				installer=${1}
 			else
-				echo "-- Invalid argument: ${1}" >&2
+				echo "** Error: Invalid argument: ${1}" >&2
 				exit 1
 			fi
 			;;
@@ -78,7 +78,7 @@ fi
 
 # Verify the boot directory
 if ! [ -e "${boot_dir}"/config.txt ] ; then
-	echo "-- Invalid boot directory: ${boot_dir}" >&2
+	echo "** Error: Invalid boot directory: ${boot_dir}" >&2
 	exit 1
 fi
 echo "-- Use boot directory ${boot_dir}"
@@ -93,7 +93,7 @@ fi
 if [ -n "${installer}" ] ; then
 	# Check if the provided installer file exists
 	if ! [ -e "${installer}" ] ; then
-		echo "-- No such installer: ${installer}" >&2
+		echo "** Error: No such installer: ${installer}" >&2
 		exit 1
 	fi
 
@@ -107,7 +107,7 @@ else
 	# Check if the remote installer exists
 	installer_url=${github_url}/raw/main/release/rpi-install.tgz
 	if ! wget -q --spider "${installer_url}" ; then
-		echo "-- No such remote installer: ${installer_url}" >&2
+		echo "** Error: No such remote installer: ${installer_url}" >&2
 		exit 1
 	fi
 

@@ -8,7 +8,7 @@ function out()
 	local rc=${?}
 
 	if [ "${rc}" -ne 0 ] ; then
-		echo "Script failed" >&2
+		echo "** Error: Script failed" >&2
 	fi
 }
 
@@ -83,7 +83,7 @@ while [ $# -gt 0 ] ; do
 			elif [ -z "${arch}" ] ; then
 				arch=${1}
 			else
-				echo "Invalid argument: ${1}" >&2
+				echo "** Error: Invalid argument: ${1}" >&2
 				exit 2
 			fi
 			;;
@@ -97,7 +97,7 @@ if [ -z "${series}" ] || [ -z "${arch}" ] ; then
 fi
 
 if [ "${arch}" != "armhf" ] && [ "${arch}" != "arm64" ] ; then
-	echo "Invalid architecture: ${arch}" >&2
+	echo "** Error: Invalid architecture: ${arch}" >&2
 	exit 1
 fi
 
@@ -174,7 +174,7 @@ case "${series}" in
 
 	*)
 		trap - EXIT INT TERM HUP
-		echo "Invalid series: ${series}" >&2
+		echo "** Error: Invalid series: ${series}" >&2
 		exit 1
 		;;
 

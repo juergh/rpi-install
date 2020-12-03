@@ -47,7 +47,7 @@ while [ $# -ne 0 ] ; do
 			action=${1}
 			;;
 		*)
-			echo "Invalid argument: ${1}" >&2
+			echo "** Error: Invalid argument: ${1}" >&2
 			exit 2
 			;;
 	esac
@@ -80,7 +80,7 @@ EOF
 		;;
 	unset)
 		if ! [ -e /etc/hostname.rpi ] ; then
-			echo "Unable to unset hostname" \
+			echo "** Error: Unable to unset hostname" \
 				 "(no such file: /etc/hostname.rpi)" >&2
 			exit 1
 		fi

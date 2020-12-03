@@ -18,7 +18,7 @@ function out()
 	fi
 
 	if [ "${rc}" -ne 0 ] ; then
-		echo "Script failed" >&2
+		echo "** Error: Script failed" >&2
 	fi
 }
 
@@ -71,7 +71,7 @@ while [ "${#}" -gt 0 ] ; do
 			if [ -z "${image}" ] ; then
 				image=${1}
 			else
-				echo "-- Invalid argument: ${1}" >&2
+				echo "** Error: Invalid argument: ${1}" >&2
 				exit 2
 			fi
 			;;
@@ -85,7 +85,7 @@ if [ -z "${image}" ] ; then
 fi
 
 if ! [ -d firmware ] ; then
-	echo "-- No such directory: ./firmware" >&2
+	echo "** Error: No such directory: ./firmware" >&2
 	exit 2
 fi
 

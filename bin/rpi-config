@@ -8,7 +8,7 @@ function out()
         rc=$?
 
         if [ "${rc}" -ne 0 ] ; then
-                echo "-- Script failed" >&2
+                echo "** Error: Script failed" >&2
         fi
 }
 
@@ -222,7 +222,7 @@ while [ "${#}" -gt 0 ] ; do
 			ROOT_DIR=${1}
 			;;
 		*)
-			echo "-- Invalid argument: ${1}" >&2
+			echo "** Error: Invalid argument: ${1}" >&2
 			exit 2
 			;;
 	esac
@@ -236,7 +236,7 @@ if [ -d "${ROOT_DIR}"/boot/firmware ] ; then
 elif  [ -d "${ROOT_DIR}"/boot ] ; then
 	BOOT_DIR=${ROOT_DIR}/boot
 else
-	echo "-- No such boot directories: ${ROOT_DIR}/boot{/firmware,}" >&2
+	echo "** Error: No such boot directory: ${ROOT_DIR}/boot{/firmware,}" >&2
 	exit 1
 fi
 
