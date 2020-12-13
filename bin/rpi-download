@@ -178,7 +178,7 @@ case "${series}" in
 		latest_url=https://downloads.raspberrypi.org/
 
 		# Download the latest image
-		download_image "${latest_url}" "${image}"
+		download_image "${latest_url}" "${remote_image}" "${image}"
 		;;
 
 	*)
