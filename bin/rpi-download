@@ -144,6 +144,15 @@ case "${series}" in
 		fi
 		;;
 
+	# Ubuntu Desktop
+	groovy-desktop)
+		image=groovy-preinstalled-desktop-arm64+raspi.img.xz
+		remote_image=ubuntu-20.10-preinstalled-desktop-arm64+raspi.img.xz
+		release_url=http://cdimage.ubuntu.com/releases/groovy/release/
+
+		download_image "${release_url}" "${remote_image}" "${image}"
+		;;
+
 	# Ubuntu Core
 	core18|core20)
 		year=${series#core}
