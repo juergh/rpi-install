@@ -141,7 +141,7 @@ function set_service()
 
 	for service in "${@}" ; do
 		echo "--   ${service}"
-		systemctl --root="${ROOT_DIR}" "${action}" "${service}"
+		systemctl --root="${ROOT_DIR}" "${action}" "${service}" || continue
 
 		# Enable pwauth for ssh
 		if [ "${action}" = "enable" ] && [ "${service}" = "ssh" ] ; then
