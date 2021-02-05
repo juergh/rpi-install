@@ -34,7 +34,7 @@ echo "${serial}" > "${bname}/serial"
 uname -a > "${bname}/uname_${ksuffix}"
 sudo modprobe configs
 zcat /proc/config.gz > "${bname}/config_${ksuffix}"
-dmesg > "${bname}/dmesg_${ksuffix}"
+sudo dmesg > "${bname}/dmesg_${ksuffix}"
 lsmod > "${bname}/lsmod_${ksuffix}"
 cat /proc/meminfo > "${bname}/meminfo_${ksuffix}"
 
