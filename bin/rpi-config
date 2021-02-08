@@ -254,7 +254,7 @@ set_service "disable" "unattended-upgrades"
 enable_wifi
 
 # FIXME: Hack for broken Groovy
-if grep -q 'groovy' "${ROOT_DIR}"/etc/lsb-release ; then
+if grep -q 'groovy' "${ROOT_DIR}"/etc/lsb-release 2>/dev/null ; then
 	echo "-- Hacking up Groovy"
 	sed -i 's/$/ net.ifnames=0/' "${BOOT_DIR}"/cmdline.txt
 fi
