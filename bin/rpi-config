@@ -111,10 +111,13 @@ function add_user()
 					"${user}"
 		fi
 
-		cat << EOF > "${ROOT_DIR}"/etc/sudoers.d/"${user}"
+		# Add a sudoer file
+		if [ -d "${ROOT_DIR}"/etc/sudoers.d ] ; then
+			cat << EOF > "${ROOT_DIR}"/etc/sudoers.d/"${user}"
 "${user}" ALL = NOPASSWD: ALL
 EOF
-		chmod 440 "${ROOT_DIR}"/etc/sudoers.d/"${user}"
+			chmod 440 "${ROOT_DIR}"/etc/sudoers.d/"${user}"
+		fi
 
 		# Copy the SSH public key
 		pubkey=${HERE}/../ssh/${user}.pubkey
