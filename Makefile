@@ -8,21 +8,19 @@ all: release/rpi-install.tgz
 
 initrd: buildd/initrd.img
 
-# Unpack the firmware initrd and inject all the bits and pieces that turns it
-# into an installer initrd
+# Build the installer initrd tree
 buildd/initrdd:
 	rm -rf $@/
 	mkdir -p $@/
-	cd $@ && lz4cat $(ROOTDIR)/firmware/boot/firmware/initrd.img | cpio -i
-	# Remove unnecessary files to shrink the size of the initrd
-	rm -rf $@/lib/firmware $@/lib/modules
 	# Copy the installer init
 	cp bin/init $@/
-	# Copy additional binaries and libraries required by the installer
-	rsync --verbose --archive --ignore-existing --exclude '/README' \
-	    --exclude '/boot/' firmware/ $@/
+	# Copy binaries and libraries
+	rsync --verbose --archive --ignore-existing --exclude '/boot/' \
+		firmware/ $@/
+	# Create the busybox sh link for bin/init
+	ln $@/bin/busybox $@/bin/sh
 
-# Rebuild the installer initrd
+# Build the installer initrd
 buildd/initrd.img: buildd/initrdd
 	find $< | xargs touch -h -d $(DATE_EPOCH)
 	cd $< && find . | sort | cpio --reproducible -H newc -o | gzip -9 > \
@@ -34,6 +32,10 @@ buildd/install: buildd/initrd.img
 	cp -r firmware/boot/firmware/* $@/
 	cp buildd/initrd.img $@/
 	cp boot/*.txt $@/
+	# Create dummy README files required by the firmware
+	touch $@/README
+	mkdir -p $@/overlays
+	touch $@/overlays/README
 
 release/rpi-install.tgz: buildd/install
 	find $< | xargs touch -h -d $(DATE_EPOCH)
