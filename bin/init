@@ -7,6 +7,8 @@ REDFISH_HOST=192.168.99.11:5000
 
 echo "-- Run installer"
 
+/bin/busybox --install /bin
+
 [ -d /dev ] || mkdir -m 0755 /dev
 [ -d /root ] || mkdir -m 0700 /root
 [ -d /sys ] || mkdir /sys
@@ -33,39 +35,21 @@ if mount /dev/mmcblk0p1 /boot ; then
 	# Clear the one-time boot flag
 	sed -i 's,^# rpi-install ONCE ,,' /boot/config.txt
 
-	# Copy wpa_supplicant.conf
-	cp /boot/install/wpa_supplicant.conf /etc/
-
 	echo "-- Unmount /dev/mmcblk0p1"
 	sync
 	umount /boot
 fi
 
+echo "-- Load kernel modules"
+depmod
+modprobe r8152
+
 echo "-- Wait for /sys/class/net/eth0"
 # shellcheck disable=SC2034
-for i in $(seq 5) ; do
+for i in $(seq 10) ; do
 	[ -e /sys/class/net/eth0 ] && break
 	sleep .5
 done
-
-if ! [ -e /sys/class/net/eth0 ] ; then
-	echo "-- Load wifi modules"
-	if ! [ -e /usr/sbin/depmod ] ; then
-		ln -s /bin/kmod /usr/sbin/depmod
-	fi
-	depmod -a
-	modprobe brcmfmac
-
-	echo "-- Wait for /sys/class/net/wlan0"
-	# shellcheck disable=SC2034
-	for i in $(seq 5) ; do
-		[ -e /sys/class/net/wlan0 ] && break
-		sleep .5
-	done
-
-	echo "-- Connect to wifi"
-	wpa_supplicant -B -c /etc/wpa_supplicant.conf -i wlan0
-fi
 
 echo "-- Get an IP"
 dhclient
@@ -76,7 +60,7 @@ serial=$(cat /proc/device-tree/serial-number | tr -d '\0\n')
 data=$(wget -q -O - "http://${REDFISH_HOST}/redfish/v1/Systems/${serial}/Actions/ComputerSystem.Update" | \
 	   tr -d '\n' | \
 	   sed 's,":\s*",":",g')
-# Extract the update status from the reponse
+# Extract the update status from the response
 status=${data#*\"Status\":\"}
 status=${status%%\"*}
 if [ "${status}" = "Pending" ] ; then
