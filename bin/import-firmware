@@ -39,8 +39,8 @@ function find_so()
 				break
 			fi
 		done
-	done < <(arm-linux-gnueabihf-readelf -d "${root}/${bin}" | \
-				 grep ' Shared library: ')
+	done < <(arm-linux-gnueabihf-readelf -d "${root}/${bin}" 2>/dev/null | \
+				 grep ' Shared library: ' || true)
 }
 
 function usage()
@@ -137,6 +137,7 @@ bins=(
 	/bin/busybox
 	/usr/bin/tar
 	/usr/sbin/dhclient
+	/usr/sbin/dhclient-script
 )
 for bin in "${bins[@]}" ; do
 	while IFS= read -r b ; do
