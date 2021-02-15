@@ -1,3 +1,23 @@
+v0.0.5
+  * init: Run dhclient in verbose mode
+  * import-firmware: Import dhclient-script
+  * init: Drop support for wifi
+  * Build the installer initrd from scratch
+  * firmware: Import from latest Focal armhf image
+  * config.txt: Add upstream_kernel=0
+  * import-firmware: Misc fixes
+  * rpi-config: Prevent error messages if /etc/lsb-release doesn't exist
+  * rpi-config: Do a sanity check before creating a sudoer file
+  * rpi-collect: Use sudo with dmesg
+  * rpi-download: Fix the download of Raspberry Pi OS images
+  * rpi-config: Don't fail if a service can't be enabled or disabled
+  * rpi-download: Add support for downloading Ubuntu Desktop images
+  * rpi-config: Temporary hack for broken Groovy images
+  * rpi-config: Fix -r, --root commandline option
+  * Prefix errors with '** Error: '
+  * rpi-config: Silence shellcheck warning
+  * rpi-install: Don't create wpa_supplicant.conf if run directly on the host
+  * rpi-hostname: Fix the generation of the hostname
 v0.0.4
   * rpi-hostname: Add bashism
   * rpi-hostname-service: Ensure rpi-hostname is run after the root is re-mounted rw
