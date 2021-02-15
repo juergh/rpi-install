@@ -32,7 +32,7 @@ function find_so()
 		so=${line%\]*}
 		so=${so##*\[}
 
-		for libdir in /lib/arm-linux-gnueabihf /usr/lib/arm-linux-gnueabihf ; do
+		for libdir in /lib /lib/arm-linux-gnueabihf ; do
 			bin=${libdir}/${so}
 			if [ -e "${root}/${bin}" ] ; then
 				find_so "${root}" "${bin}"
@@ -113,18 +113,30 @@ else
 	echo "-- Image partitions mounted on ${MOUNTD}"
 fi
 
-echo "-- Copy kernel, initrd and DTBs"
+rm -rf firmware
 
-rm -f firmware/boot/firmware/*.dtb
-cp "${rootd}"/boot/firmware/{*.dtb,initrd.img,vmlinuz} \
-   firmware/boot/firmware/
+# Create directory tree
+mkdir -p firmware/boot/firmware
+mkdir -p firmware/usr/{bin,lib,sbin}
+ln -s usr/bin firmware/bin
+ln -s usr/lib firmware/lib
+ln -s usr/sbin firmware/sbin
 
-echo "-- Copy additional binaries and libraries"
+echo "-- Copy kernel and DTBs"
 
-rm -rf firmware/{lib,usr}
+for f in "${rootd}"/boot/firmware/{bcm*.dtb,vmlinuz} ; do
+	echo "--   ${f#${rootd}}"
+	cp  "${f}" firmware/boot/firmware/
+done
+
+echo "-- Copy binaries and libraries"
+
+cp "${rootd}"/lib/klibc-*.so firmware/lib/
+
 bins=(
+	/bin/busybox
 	/usr/bin/tar
-	/usr/sbin/wpa_supplicant
+	/usr/sbin/dhclient
 )
 for bin in "${bins[@]}" ; do
 	while IFS= read -r b ; do
@@ -139,9 +151,7 @@ done
 echo "-- Copy kernel modules"
 
 mods=(
-	brcmfmac.ko
-	brcmutil.ko
-	cfg80211.ko
+	r8152.ko
 )
 for mod in "${mods[@]}" ; do
 	while IFS= read -r m ; do
@@ -149,21 +159,4 @@ for mod in "${mods[@]}" ; do
 		mkdir -p firmware/"${m%/*}"
 		cp "${rootd}/${m}" firmware/"${m}"
 	done < <(cd "${rootd}" && find lib/modules -type f -name "${mod}")
-done
-
-echo "-- Copy firmware binaries"
-
-fws=(
-	brcmfmac43430-sdio.bin
-	brcmfmac43430-sdio.raspberrypi*.txt
-	brcmfmac43455-sdio.bin
-	brcmfmac43455-sdio.clm_blob
-	brcmfmac43455-sdio.raspberrypi*.txt
-)
-for fw in "${fws[@]}" ; do
-	while IFS= read -r f ; do
-		echo "--   /${f}"
-		mkdir -p firmware/"${f%/*}"
-		cp "${rootd}/${f}" firmware/"${f}"
-	done < <(cd "${rootd}" && find lib/firmware -type f -name "${fw}")
 done
