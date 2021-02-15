@@ -6,3 +6,4 @@ kernel=vmlinuz
 initramfs initrd.img
 cmdline=cmdline.txt
 enable_uart=1
+upstream_kernel=0
