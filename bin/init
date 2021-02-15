@@ -23,6 +23,9 @@ mount -t devtmpfs -o nosuid,mode=0755 udev /dev
 mkdir /dev/pts
 mount -t devpts -o noexec,nosuid,gid=5,mode=0620 devpts /dev/pts || true
 
+mkdir -p /etc /var/lib/dhcp /var/run
+touch /etc/fstab
+
 echo "-- Wait for /dev/mmcblk0p1"
 # shellcheck disable=SC2034
 for i in $(seq 10) ; do
@@ -52,7 +55,7 @@ for i in $(seq 10) ; do
 done
 
 echo "-- Get an IP"
-dhclient
+dhclient -v
 
 echo "-- Query Redfish host ${REDFISH_HOST}"
 # shellcheck disable=SC2002
