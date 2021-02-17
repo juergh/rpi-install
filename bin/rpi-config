@@ -248,7 +248,7 @@ install_tools
 set_hostname
 set_console "console=tty1" "console=ttyAMA0,115200"
 set_kernel_loglevel "8"
-add_user "ubuntu" "bottle-pi"
+add_user "ubuntu"
 set_service "enable" "ssh"
 set_service "disable" "unattended-upgrades"
 enable_wifi
