@@ -200,14 +200,16 @@ EOF
 function usage()
 {
 	cat <<EOF
-Usage: rpi-config [-h] [-r DIR]
+Usage: rpi-config [-h] [ROOT_DIR]
 
 Configure a Raspberry Pi system.
 
-Postional arguments:
-  -h, --help      Show this help text and exit.
-  -r, --root DIR  Configure the system under <DIR> instead of the current
-                  system.
+Positional arguments:
+  ROOT_DIR    The root directory of the system to configure. If not provided,
+              configures the current system.
+
+Optional arguments:
+  -h, --help  Show this help text and exit.
 EOF
 }
 
@@ -220,13 +222,13 @@ while [ "${#}" -gt 0 ] ; do
 			usage
 			exit
 			;;
-		-r|--root)
-			shift
-			ROOT_DIR=${1}
-			;;
 		*)
-			echo "** Error: Invalid argument: ${1}" >&2
-			exit 2
+			if [ -z "${ROOT_DIR}" ] ; then
+				ROOT_DIR=${1}
+			else
+				echo "** Error: Invalid argument: ${1}" >&2
+				exit 2
+			fi
 			;;
 	esac
 	shift
