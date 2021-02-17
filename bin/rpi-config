@@ -174,14 +174,14 @@ function enable_wifi()
 
 	if [ -d "${ROOT_DIR}"/etc/netplan ] ; then
 		cat << EOF > "${ROOT_DIR}"/etc/netplan/99-rpi-config.yaml
-network:
-    wifis:
-        wlan0:
-            dhcp4: true
-            optional: true
-            access-points:
-                "${wifi_ssid}":
-                    password: "${wifi_passphrase}"
+#network:
+#    wifis:
+#        wlan0:
+#            dhcp4: true
+#            optional: true
+#            access-points:
+#                "${wifi_ssid}":
+#                    password: "${wifi_passphrase}"
 EOF
 	else
 		cat << EOF > "${ROOT_DIR}"/etc/wpa_supplicant/wpa_supplicant.conf
