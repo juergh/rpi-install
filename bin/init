@@ -91,12 +91,14 @@ while true ; do
 
 -- Select an image to install
 
-      1) Groovy - arm64
-      2) Groovy - armhf
-      3) Focal  - arm64
-      4) Focal  - armhf
-      5) Bionic - arm64
-      6) Bionic - armhf
+      1) Hirsute - arm64
+      2) Hirsute - armhf
+      3) Groovy  - arm64
+      4) Groovy  - armhf
+      5) Focal   - arm64
+      6) Focal   - armhf
+      7) Bionic  - arm64
+      8) Bionic  - armhf
 
      10) Core20 - arm64
      11) Core20 - armhf
@@ -122,12 +124,14 @@ __EOF__
 		#
 		# Ubuntu Server
 		#
-		1) image=/redfish/v1/Images/ubuntu-groovy-arm64 ;;
-		2) image=/redfish/v1/Images/ubuntu-groovy-armhf ;;
-		3) image=/redfish/v1/Images/ubuntu-focal-arm64  ;;
-		4) image=/redfish/v1/Images/ubuntu-focal-armhf  ;;
-		5) image=/redfish/v1/Images/ubuntu-bionic-arm64 ;;
-		6) image=/redfish/v1/Images/ubuntu-bionic-armhf ;;
+		1) image=/redfish/v1/Images/ubuntu-hirsute-arm64 ;;
+		2) image=/redfish/v1/Images/ubuntu-hirsute-armhf ;;
+		3) image=/redfish/v1/Images/ubuntu-groovy-arm64 ;;
+		4) image=/redfish/v1/Images/ubuntu-groovy-armhf ;;
+		5) image=/redfish/v1/Images/ubuntu-focal-arm64  ;;
+		6) image=/redfish/v1/Images/ubuntu-focal-armhf  ;;
+		7) image=/redfish/v1/Images/ubuntu-bionic-arm64 ;;
+		8) image=/redfish/v1/Images/ubuntu-bionic-armhf ;;
 
 		#
 		# Ubuntu Core
