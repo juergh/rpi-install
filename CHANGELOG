@@ -1,3 +1,8 @@
+v0.0.6
+  * init: Add Hirsute images
+  * rpi-config: Turn --root into a positional argument
+  * rpi-config: Don't create a bottle-pi user
+  * rpi-config: Disable wifi
 v0.0.5
   * init: Run dhclient in verbose mode
   * import-firmware: Import dhclient-script
