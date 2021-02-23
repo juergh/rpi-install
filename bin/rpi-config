@@ -197,6 +197,18 @@ EOF
 	fi
 }
 
+function add_r8152_net_module()
+{
+	if ! [ -e "${BOOT_DIR}"/network-config ] ; then
+		return
+	fi
+
+	echo "-- Add r8152 network module"
+
+	# Add the r8152 module to the list of 'built-in' modules
+	sed -i 's/lan78xx/lan78xx r8152/' "${BOOT_DIR}"/network-config
+}
+
 function usage()
 {
 	cat <<EOF
@@ -254,9 +266,10 @@ add_user "ubuntu"
 set_service "enable" "ssh"
 set_service "disable" "unattended-upgrades"
 enable_wifi
+add_r8152_net_module
 
-# FIXME: Hack for broken Groovy
-if grep -q 'groovy' "${ROOT_DIR}"/etc/lsb-release 2>/dev/null ; then
-	echo "-- Hacking up Groovy"
-	sed -i 's/$/ net.ifnames=0/' "${BOOT_DIR}"/cmdline.txt
+# HACK: Disable persistent net names
+if ! grep -q 'net.ifnames=0' "${BOOT_DIR}"/cmdline.txt ; then
+	echo "-- Disable persistent net names"
+	sed -i 's/^/net.ifnames=0 /' "${BOOT_DIR}"/cmdline.txt
 fi
