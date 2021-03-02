@@ -60,7 +60,7 @@ dhclient -v
 echo "-- Query Redfish host ${REDFISH_HOST}"
 # shellcheck disable=SC2002
 serial=$(cat /proc/device-tree/serial-number | tr -d '\0\n')
-data=$(wget -q -O - "http://${REDFISH_HOST}/redfish/v1/Systems/${serial}/Actions/ComputerSystem.Update" | \
+data=$(/usr/bin/wget -q -O - "http://${REDFISH_HOST}/redfish/v1/Systems/${serial}/Actions/ComputerSystem.Update" | \
 	   tr -d '\n' | \
 	   sed 's,":\s*",":",g')
 # Extract the update status from the response
@@ -72,7 +72,7 @@ if [ "${status}" = "Pending" ] ; then
 	image=${image%%\"*}
 	if [ -n "${image}" ] ; then
 		# Clear the pending update
-		wget -q -O - "http://${REDFISH_HOST}/redfish/v1/Systems/${serial}/Actions/ComputerSystem.Update.Delete"
+		/usr/bin/wget -q -O - "http://${REDFISH_HOST}/redfish/v1/Systems/${serial}/Actions/ComputerSystem.Update.Delete"
 	fi
 fi
 
@@ -81,7 +81,7 @@ while true ; do
 	if [ -n "${image}" ] ; then
 		image_url="http://${REDFISH_HOST}${image}"
 		echo "-- Install image ${image_url}"
-		if wget -O - "${image_url}" | gunzip -c > /dev/mmcblk0 ; then
+		if /usr/bin/wget -O - "${image_url}" | /usr/bin/gzip -cd > /dev/mmcblk0 ; then
 			sync
 			reboot -f
 		fi
