@@ -1,3 +1,6 @@
+v0.0.7
+  * Use console=serial0,115200
+  * rpi-config: Disable persistent net names and add r8152 module
 v0.0.6
   * init: Add Hirsute images
   * rpi-config: Turn --root into a positional argument
