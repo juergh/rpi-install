@@ -135,7 +135,8 @@ cp "${rootd}"/lib/klibc-*.so firmware/lib/
 
 bins=(
 	/bin/busybox
-	/usr/bin/tar
+	/usr/bin/gzip
+	/usr/bin/wget
 	/usr/sbin/dhclient
 	/usr/sbin/dhclient-script
 )
