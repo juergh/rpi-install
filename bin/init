@@ -120,6 +120,7 @@ __EOF__
 	echo -n "-- Choice: "
 	read -r tmp
 
+	image=
 	case "${tmp}" in
 		#
 		# Ubuntu Server
