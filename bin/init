@@ -76,6 +76,10 @@ if [ "${status}" = "Pending" ] ; then
 	fi
 fi
 
+# 'Fix' 'Workqueue: events_freezable mmc_rescan' errors
+sysctl -w vm.dirty_background_ratio=5
+sysctl -w vm.dirty_ratio=10
+
 # Run the interactive installer
 while true ; do
 	if [ -n "${image}" ] ; then
