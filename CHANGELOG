@@ -1,3 +1,9 @@
+v0.0.8
+  * init: Set vm sysctls to (hopefully) prevent mmc errors
+  * init: Use the full path for gzip and wget
+  * firmware: Import from latest Focal armhf image
+  * import-firmware: Remove tar, add gzip and wget
+  * init: Clear the image name before (re-)assigning it (again)
 v0.0.7
   * Use console=serial0,115200
   * rpi-config: Disable persistent net names and add r8152 module
