@@ -164,7 +164,11 @@ fi
 # Enter debug mode if requested
 if [ "${debug}" -eq 1 ] ; then
 	echo "-- Enter debug mode (type 'exit' to continue)"
-	sudo chroot "${ROOT_DIR}"
+	if [ -n "${ROOT_DIR}" ] ; then
+		sudo debian_chroot=debug chroot "${ROOT_DIR}"
+	else
+		( cd "${BOOT_DIR}" && debian_chroot=debug bash ; cd / )
+	fi
 fi
 
 # Unmount the partitions
