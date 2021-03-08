@@ -49,7 +49,7 @@ function download_image()
 function usage()
 {
 	cat <<EOF
-Usage: rpi-download [-h] [-r] SERIES ARCH
+Usage: download-image [-h] [-r] SERIES ARCH
 
 Download a Raspberry Pi image.
 

@@ -34,7 +34,7 @@ function umount_all()
 function usage()
 {
 	cat << EOF
-Usage: rpi-prep [-d] [-h] IMAGE [INSTALLER]
+Usage: prepare-image [-d] [-h] IMAGE [INSTALLER]
 
 Prepare a Raspberry Pi image.
 
@@ -158,7 +158,7 @@ sudo "${here}"/rpi-install --boot "${BOOT_DIR}" "${opts[@]}"
 
 # Configure the system
 if [ -n "${ROOT_DIR}" ] ; then
-	sudo "${here}"/rpi-config "${ROOT_DIR}"
+	sudo "${here}"/configure-image "${ROOT_DIR}"
 fi
 
 # Enter debug mode if requested

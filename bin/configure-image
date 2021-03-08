@@ -24,7 +24,7 @@ EOF
 
 	if [ -e "${ROOT_DIR}"/etc/cloud/cloud.cfg ] ; then
 		echo "-- Disable users-groups in cloud.cfg"
-		sed -i 's/^ - users-groups/# rpi-config - users-groups/' \
+		sed -i 's/^ - users-groups/# rpi-install - users-groups/' \
 			"${ROOT_DIR}"/etc/cloud/cloud.cfg
 	fi
 }
@@ -61,9 +61,9 @@ function set_console()
     echo "${cmdline[*]} ${*}" > "${BOOT_DIR}"/cmdline.txt
 
 	# Update config.txt
-    sed -i '/^# rpi-config$/,+2d' "${BOOT_DIR}"/config.txt
     cat << EOF >> "${BOOT_DIR}"/config.txt
-# rpi-config
+
+# rpi-install
 [all]
 enable_uart=1
 EOF
@@ -93,7 +93,7 @@ function set_kernel_loglevel()
 	done
 	echo "${cmdline[*]} loglevel=${1}" > "${BOOT_DIR}"/cmdline.txt
 
-	sed -i -E 's/^(kernel\.printk[ =])/# rpi-config \1/' \
+	sed -i 's/^kernel.printk/# rpi-install kernel.printk/' \
 		"${ROOT_DIR}"/etc/sysctl.d/*.conf
 }
 
@@ -149,11 +149,11 @@ function set_service()
 		# Enable pwauth for ssh
 		if [ "${action}" = "enable" ] && [ "${service}" = "ssh" ] ; then
 			echo "--     Enable password authentication"
-			sed -i 's/^PasswordAuthentication/# rpi-config PasswordAuthentication/' \
+			sed -i 's/^PasswordAuthentication/# rpi-install PasswordAuthentication/' \
 				"${ROOT_DIR}"/etc/ssh/sshd_config
-			sed -i '/^# rpi-config$/,+1d' "${ROOT_DIR}"/etc/ssh/sshd_config
 			cat << EOF >> "${ROOT_DIR}"/etc/ssh/sshd_config
-# rpi-config
+
+# rpi-install
 PasswordAuthentication yes
 EOF
 		fi
@@ -173,7 +173,7 @@ function enable_wifi()
 	wifi_passphrase=${wifi_passphrase#* }
 
 	if [ -d "${ROOT_DIR}"/etc/netplan ] ; then
-		cat << EOF > "${ROOT_DIR}"/etc/netplan/99-rpi-config.yaml
+		cat << EOF > "${ROOT_DIR}"/etc/netplan/99-rpi-install.yaml
 #network:
 #    wifis:
 #        wlan0:
@@ -212,7 +212,7 @@ function add_r8152_net_module()
 function usage()
 {
 	cat <<EOF
-Usage: rpi-config [-h] [ROOT_DIR]
+Usage: configure-image [-h] [ROOT_DIR]
 
 Configure a Raspberry Pi system.
 
