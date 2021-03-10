@@ -83,7 +83,7 @@ sysctl -w vm.dirty_ratio=10
 # Run the interactive installer
 while true ; do
 	if [ -n "${image}" ] ; then
-		image_url="http://${REDFISH_HOST}${image}"
+		image_url="http://${REDFISH_HOST}/redfish/v1/Images/${image#/redfish/v1/Images/}"
 		echo "-- Install image ${image_url}"
 		if /usr/bin/wget -O - "${image_url}" | /usr/bin/gzip -cd > /dev/mmcblk0 ; then
 			sync
@@ -129,30 +129,30 @@ __EOF__
 		#
 		# Ubuntu Server
 		#
-		1) image=/redfish/v1/Images/ubuntu-hirsute-arm64 ;;
-		2) image=/redfish/v1/Images/ubuntu-hirsute-armhf ;;
-		3) image=/redfish/v1/Images/ubuntu-groovy-arm64 ;;
-		4) image=/redfish/v1/Images/ubuntu-groovy-armhf ;;
-		5) image=/redfish/v1/Images/ubuntu-focal-arm64  ;;
-		6) image=/redfish/v1/Images/ubuntu-focal-armhf  ;;
-		7) image=/redfish/v1/Images/ubuntu-bionic-arm64 ;;
-		8) image=/redfish/v1/Images/ubuntu-bionic-armhf ;;
+		1) image=ubuntu-hirsute-arm64 ;;
+		2) image=ubuntu-hirsute-armhf ;;
+		3) image=ubuntu-groovy-arm64  ;;
+		4) image=ubuntu-groovy-armhf  ;;
+		5) image=ubuntu-focal-arm64   ;;
+		6) image=ubuntu-focal-armhf   ;;
+		7) image=ubuntu-bionic-arm64  ;;
+		8) image=ubuntu-bionic-armhf  ;;
 
 		#
 		# Ubuntu Core
 		#
-		10) image=/redfish/v1/Images/ubuntu-core20-arm64 ;;
-		11) image=/redfish/v1/Images/ubuntu-core20-armhf ;;
-		12) image=/redfish/v1/Images/ubuntu-core18-arm64 ;;
-		13) image=/redfish/v1/Images/ubuntu-core18-armhf ;;
-		14) image=/redfish/v1/Images/ubuntu-core16-arm64 ;;
-		15) image=/redfish/v1/Images/ubuntu-core16-armhf ;;
+		10) image=ubuntu-core20-arm64 ;;
+		11) image=ubuntu-core20-armhf ;;
+		12) image=ubuntu-core18-arm64 ;;
+		13) image=ubuntu-core18-armhf ;;
+		14) image=ubuntu-core16-arm64 ;;
+		15) image=ubuntu-core16-armhf ;;
 
 		#
 		# Raspberry Pi OS
 		#
-		20) image=/redfish/v1/Images/raspios-lite-arm64 ;;
-		21) image=/redfish/v1/Images/raspios-lite-armhf ;;
+		20) image=raspios-lite-arm64 ;;
+		21) image=raspios-lite-armhf ;;
 
 		#
 		# Misc options
