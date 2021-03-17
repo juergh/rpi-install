@@ -157,11 +157,22 @@ case "${series}" in
 	core18|core20)
 		year=${series#core}
 		image=ubuntu-core-${year}-${arch}+${flavor}.img.xz
-		beta_url=http://cdimage.ubuntu.com/ubuntu-core/${year}/beta/current/
+		edge=dangerous-edge
+		beta=dangerous-beta
+		if [ "${series}" = "core18" ] ; then
+			edge=edge
+			beta=beta
+		fi
+		edge_url=http://cdimage.ubuntu.com/ubuntu-core/${year}/${edge}/pending/
+		beta_url=http://cdimage.ubuntu.com/ubuntu-core/${year}/${beta}/current/
 		stable_url=http://cdimage.ubuntu.com/ubuntu-core/${year}/stable/current/
 
 		done=0
 		if [ "${release}" -eq 0 ] ; then
+			# Donwload the edge image
+			download_image "${edge_url}" "${image}" && done=1
+		fi
+		if [ "${done}" -eq 0 ] && [ "${release}" -eq 0 ] ; then
 			# Donwload the beta image
 			download_image "${beta_url}" "${image}" && done=1
 		fi
