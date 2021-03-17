@@ -1,3 +1,12 @@
+v0.0.9
+  * download-image: Add support for different image releases
+  * download-image: Try to download core edge images first
+  * init: Remove path prefix from image names
+  * prepare-image: Add debug mode for core images
+  * rpi-install: Wrap the config.txt modifications into a begin-end block
+  * rpi-install: Drop the generation of wpa_supplicant.conf
+  * rpi-collect: Fix shellcheck warnings
+  * Rename some tools
 v0.0.8
   * init: Set vm sysctls to (hopefully) prevent mmc errors
   * init: Use the full path for gzip and wget
