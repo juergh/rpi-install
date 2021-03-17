@@ -49,7 +49,7 @@ function download_image()
 function usage()
 {
 	cat <<EOF
-Usage: download-image [-h] [-r] SERIES ARCH
+Usage: download-image [-h] [-r RELEASE] SERIES ARCH
 
 Download a Raspberry Pi image.
 
@@ -59,12 +59,17 @@ Positional argument:
 
 Optional arguments:
   -h, --help     Show this help text and exit.
-  -r, --release  Download the latest release (stable) image rather than the
-                 latest daily (beta) image.
+  -r, --release RELEASE  Download release RELEASE of the image. See below for
+                         the list of available releases. If not provided,
+                         defaults to the first release of the list.
+
+Image releases:
+  Ubuntu Classic: daily, release
+  Ubuntu Core:    edge, beta, stable
 EOF
 }
 
-release=0
+release=
 series=
 arch=
 
@@ -75,7 +80,8 @@ while [ $# -gt 0 ] ; do
 			exit
 			;;
 		-r|--release)
-			release=1
+			shift
+			release=${1}
 			;;
 		*)
 			if [ -z "${series}" ] ; then
@@ -123,25 +129,29 @@ case "${series}" in
 		release_image_pattern="ubuntu-.*?-preinstalled-server-${arch}\+${flavor}\.img\.xz"
 		release_url=http://cdimage.ubuntu.com/releases/${series}/release/
 
-		done=0
-		if [ "${release}" -eq 0 ] ; then
-			# Download the daily devel image
-			download_image "${daily_devel_url}" "${image}" && done=1
-			if [ "${done}" -eq 0 ] ; then
-				# Download the daily image
-				download_image "${daily_url}" "${image}" && done=1
-			fi
-		fi
-		if [ "${done}" -eq 0 ] ; then
-			# Get the name of the latest release image
-			href=$(curl -s "${release_url}" | \
-				   grep -oP 'href="'"${release_image_pattern}"'"' | \
-				   sort -uV | tail -1)
-			remote_image=${href#href=\"}
-			remote_image=${remote_image%\"}
-			# Download the latest release image
-			download_image "${release_url}" "${remote_image}" "${image}"
-		fi
+		case "${release}" in
+			""|daily)
+				# Download the daily devel image
+				if ! download_image "${daily_devel_url}" "${image}" ; then
+					# Download the daily image
+					download_image "${daily_url}" "${image}"
+				fi
+				;;
+			release)
+				# Get the name of the latest release image
+				href=$(curl -s "${release_url}" | \
+						   grep -oP 'href="'"${release_image_pattern}"'"' | \
+						   sort -uV | tail -1)
+				remote_image=${href#href=\"}
+				remote_image=${remote_image%\"}
+				# Download the latest release image
+				download_image "${release_url}" "${remote_image}" "${image}"
+				;;
+			*)
+				echo "Invalid release: ${release}" >&2
+				exit 1
+				;;
+		esac
 		;;
 
 	# Ubuntu Desktop
@@ -167,19 +177,24 @@ case "${series}" in
 		beta_url=http://cdimage.ubuntu.com/ubuntu-core/${year}/${beta}/current/
 		stable_url=http://cdimage.ubuntu.com/ubuntu-core/${year}/stable/current/
 
-		done=0
-		if [ "${release}" -eq 0 ] ; then
-			# Donwload the edge image
-			download_image "${edge_url}" "${image}" && done=1
-		fi
-		if [ "${done}" -eq 0 ] && [ "${release}" -eq 0 ] ; then
-			# Donwload the beta image
-			download_image "${beta_url}" "${image}" && done=1
-		fi
-		if [ "${done}" -eq 0 ] ; then
-			# Download the stable image
-			download_image "${stable_url}" "${image}"
-		fi
+		case "${release}" in
+			""|edge)
+				# Donwload the edge image
+				download_image "${edge_url}" "${image}"
+				;;
+			beta)
+				# Donwload the beta image
+				download_image "${beta_url}" "${image}"
+				;;
+			stable)
+				# Download the stable image
+				download_image "${stable_url}" "${image}"
+				;;
+			*)
+				echo "Invalid release: ${release}" >&2
+				exit 1
+				;;
+		esac
 		;;
 
 	# Raspberry Pi OS
