@@ -38,6 +38,7 @@ zcat /proc/config.gz > "${bname}/config_${ksuffix}"
 sudo dmesg > "${bname}/dmesg_${ksuffix}"
 lsmod > "${bname}/lsmod_${ksuffix}"
 cat /proc/meminfo > "${bname}/meminfo_${ksuffix}"
+cat /proc/cpuinfo > "${bname}/cpuinfo_${ksuffix}"
 
 tmpf=$(mktemp)
 find /proc/device-tree/ > "${tmpf}"
