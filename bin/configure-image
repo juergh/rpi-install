@@ -5,11 +5,63 @@
 
 function out()
 {
-        rc=$?
+	rc=${?}
 
-        if [ "${rc}" -ne 0 ] ; then
-                echo "** Error: Script failed" >&2
-        fi
+	trap - EXIT INT TERM HUP
+
+	# Cleanup
+	rm -f "${ROOT_DIR}"/etc/resolv.conf
+	if [ -e "${ROOT_DIR}"/etc/resolv.orig ] ; then
+		mv "${ROOT_DIR}"/etc/resolv.orig "${ROOT_DIR}"/etc/resolv.conf
+	fi
+
+    if [ "${rc}" -ne 0 ] ; then
+        echo "** Error: Script failed" >&2
+    fi
+
+	exit "${rc}"
+}
+
+function install_packages()
+{
+	local packages
+
+	packages=()
+	if ! [ -d  "${ROOT_DIR}"/etc/ssh/sshd_config.d ] ; then
+		packages+=("openssh-server")
+	fi
+	if ! [ -d  "${ROOT_DIR}"/etc/sudoers.d ] ; then
+		packages+=("sudo")
+	fi
+
+	if [ "${#packages[@]}" -eq 0 ] ; then
+		return
+	fi
+
+	echo "-- Install package"
+	printf -- "--   %s\n" "${packages[@]}"
+
+	if [ -e "${ROOT_DIR}"/etc/resolv.conf ] ; then
+		mv "${ROOT_DIR}"/etc/resolv.conf "${ROOT_DIR}"/etc/resolv.orig
+	fi
+	cp /etc/resolv.conf "${ROOT_DIR}"/etc/resolv.conf
+
+	chroot "${ROOT_DIR}" sudo apt-get update
+	chroot "${ROOT_DIR}" sudo apt-get -y --no-install-recommends install \
+		   "${packages[@]}"
+	chroot "${ROOT_DIR}" sudo apt-get -y clean
+}
+
+function install_tools()
+{
+	local tools
+
+	readarray -t tools < <(cd "${HERE}" && ls -1 rpi-*)
+
+	echo "-- Install tools"
+	printf -- "--   %s\n" "${tools[@]}"
+
+	( cd "${HERE}" && cp "${tools[@]}" "${ROOT_DIR}"/usr/bin )
 }
 
 function set_cloud_init_config()
@@ -27,13 +79,6 @@ EOF
 		sed -i 's/^ - users-groups/# rpi-install - users-groups/' \
 			"${ROOT_DIR}"/etc/cloud/cloud.cfg
 	fi
-}
-
-function install_tools()
-{
-	echo "-- Install tools"
-
-	cp "${HERE}"/rpi-* "${ROOT_DIR}"/usr/bin
 }
 
 function set_hostname()
@@ -112,12 +157,10 @@ function add_user()
 		fi
 
 		# Add a sudoer file
-		if [ -d "${ROOT_DIR}"/etc/sudoers.d ] ; then
-			cat << EOF > "${ROOT_DIR}"/etc/sudoers.d/"${user}"
+		cat << EOF > "${ROOT_DIR}"/etc/sudoers.d/"${user}"
 "${user}" ALL = NOPASSWD: ALL
 EOF
-			chmod 440 "${ROOT_DIR}"/etc/sudoers.d/"${user}"
-		fi
+		chmod 440 "${ROOT_DIR}"/etc/sudoers.d/"${user}"
 
 		# Copy the SSH public key
 		pubkey=${HERE}/../ssh/${user}.pubkey
@@ -257,8 +300,9 @@ else
 	exit 1
 fi
 
-set_cloud_init_config
+install_packages
 install_tools
+set_cloud_init_config
 set_hostname
 set_console "console=tty1" "console=serial0,115200"
 set_kernel_loglevel "8"
