@@ -21,7 +21,7 @@ function download_image()
 		local_image=${remote_image}
 	fi
 
-	echo "-- Trying ${base_url}"
+	echo "-- Trying ${base_url%/}/${remote_image}"
 
 	# Check if a download is necessary
 	sha256_file=${local_image}.sha256sum
@@ -37,7 +37,10 @@ function download_image()
 	fi
 
 	# Download the image
-	curl --fail --head "${base_url}/${remote_image}" >/dev/null 2>&1 || return 1
+	if ! curl --fail --head "${base_url}/${remote_image}" >/dev/null 2>&1 ; then
+		echo "** Error: Remote file not found" >&2
+		return 1
+	fi
 	wget -O "${local_image}" "${base_url}/${remote_image}" || return 1
 
 	# Create the sha256sum file
@@ -54,18 +57,26 @@ Usage: download-image [-h] [-r RELEASE] SERIES ARCH
 Download a Raspberry Pi image.
 
 Positional argument:
-  SERIES         The series name, i.e., groovy, core18, raspios, ...
-  ARCH           The architecture of the image (armhf or arm64).
+  SERIES                 The series name, i.e., groovy, core18, raspios, ...
+  ARCH                   The architecture of the image (armhf or arm64).
 
 Optional arguments:
-  -h, --help     Show this help text and exit.
+  -h, --help             Show this help text and exit.
   -r, --release RELEASE  Download release RELEASE of the image. See below for
                          the list of available releases. If not provided,
                          defaults to the first release of the list.
 
+Image series:
+  Ubuntu Desktop:  groovy-desktop, hisrsute-desktop
+  Ubuntu Classic:  xenial, bionic, focal, ...
+  Ubuntu Core:     core16, core18, core20
+  Raspberry Pi OS: raspios
+
 Image releases:
-  Ubuntu Classic: daily, release
-  Ubuntu Core:    edge, beta, stable
+  Ubuntu Desktop:  daily, release
+  Ubuntu Classic:  daily, release
+  Ubuntu Core:     edge, beta, stable
+  Raspberry Pi OS: latest
 EOF
 }
 
@@ -144,11 +155,16 @@ case "${series}" in
 						   sort -uV | tail -1)
 				remote_image=${href#href=\"}
 				remote_image=${remote_image%\"}
+				if [ -z "${remote_image}" ] ; then
+					echo "** Error: Unable to determine release image name" >&2
+					exit 1
+				fi
+
 				# Download the latest release image
 				download_image "${release_url}" "${remote_image}" "${image}"
 				;;
 			*)
-				echo "Invalid release: ${release}" >&2
+				echo "** Error: Invalid release: ${release}" >&2
 				exit 1
 				;;
 		esac
@@ -156,11 +172,40 @@ case "${series}" in
 
 	# Ubuntu Desktop
 	groovy-desktop)
+		if [ "${arch}" != "arm64" ] ; then
+			echo "** Error: Desktop images are only supported on arm64" >&2
+			exit 1
+		fi
 		image=groovy-preinstalled-desktop-arm64+raspi.img.xz
-		remote_image=ubuntu-20.10-preinstalled-desktop-arm64+raspi.img.xz
-		release_url=http://cdimage.ubuntu.com/releases/groovy/release/
+		daily_devel_url=http://cdimage.ubuntu.com/daily-preinstalled/current/
+		release_image_pattern="ubuntu-.*?-preinstalled-desktop-arm64\+raspi\.img\.xz"
+		release_url=http://cdimage.ubuntu.com/releases/${series%-desktop}/release/
 
-		download_image "${release_url}" "${remote_image}" "${image}"
+		case "${release}" in
+			""|daily)
+				# Download the daily devel image
+				download_image "${daily_devel_url}" "${image}"
+				;;
+			release)
+				# Get the name of the latest release image
+				href=$(curl -s "${release_url}" | \
+						   grep -oP 'href="'"${release_image_pattern}"'"' | \
+						   sort -uV | tail -1)
+				remote_image=${href#href=\"}
+				remote_image=${remote_image%\"}
+				if [ -z "${remote_image}" ] ; then
+					echo "** Error: Unable to determine release image name" >&2
+					exit 1
+				fi
+
+				# Download the latest release image
+				download_image "${release_url}" "${remote_image}" "${image}"
+				;;
+			*)
+				echo "** Error: Invalid release: ${release}" >&2
+				exit 1
+				;;
+		esac
 		;;
 
 	# Ubuntu Core
@@ -191,7 +236,7 @@ case "${series}" in
 				download_image "${stable_url}" "${image}"
 				;;
 			*)
-				echo "Invalid release: ${release}" >&2
+				echo "** Error: Invalid release: ${release}" >&2
 				exit 1
 				;;
 		esac
