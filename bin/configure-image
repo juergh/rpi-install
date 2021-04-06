@@ -15,9 +15,9 @@ function out()
 		mv "${ROOT_DIR}"/etc/resolv.orig "${ROOT_DIR}"/etc/resolv.conf
 	fi
 
-    if [ "${rc}" -ne 0 ] ; then
-        echo "** Error: Script failed" >&2
-    fi
+	if [ "${rc}" -ne 0 ] ; then
+		echo "** Error: Script failed" >&2
+	fi
 
 	exit "${rc}"
 }
@@ -27,10 +27,10 @@ function install_packages()
 	local packages
 
 	packages=()
-	if ! [ -d  "${ROOT_DIR}"/etc/ssh/sshd_config.d ] ; then
+	if ! [ -d "${ROOT_DIR}"/etc/ssh/sshd_config.d ] ; then
 		packages+=("openssh-server")
 	fi
-	if ! [ -d  "${ROOT_DIR}"/etc/sudoers.d ] ; then
+	if ! [ -d "${ROOT_DIR}"/etc/sudoers.d ] ; then
 		packages+=("sudo")
 	fi
 
@@ -94,19 +94,19 @@ function set_console()
 	local cmdline opts opt
 	echo "-- Set console (${*})"
 
-    cmdline=()
-    readarray -t opts < <(head -1 "${BOOT_DIR}"/cmdline.txt | tr ' ' '\n')
-    for opt in "${opts[@]}" ; do
-        case "${opt}" in
-            console=*) ;;              # Drop the option
-            *) cmdline+=("${opt}") ;;  # Keep the option
-        esac
-    done
-    # cmdline+=("earlycon=pl011,0xfe201000") # This option might break boot
-    echo "${cmdline[*]} ${*}" > "${BOOT_DIR}"/cmdline.txt
+	cmdline=()
+	readarray -t opts < <(head -1 "${BOOT_DIR}"/cmdline.txt | tr ' ' '\n')
+	for opt in "${opts[@]}" ; do
+		case "${opt}" in
+			console=*) ;;              # Drop the option
+			*) cmdline+=("${opt}") ;;  # Keep the option
+		esac
+	done
+	# cmdline+=("earlycon=pl011,0xfe201000") # This option might break boot
+	echo "${cmdline[*]} ${*}" > "${BOOT_DIR}"/cmdline.txt
 
 	# Update config.txt
-    cat << EOF >> "${BOOT_DIR}"/config.txt
+	cat << EOF >> "${BOOT_DIR}"/config.txt
 
 # rpi-install
 [all]
