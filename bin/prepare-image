@@ -10,8 +10,8 @@ function out()
 	umount_all
 
 	if [ "${rc}" -ne 0 ] ; then
-        echo "** Error: Script failed" >&2
-    fi
+		echo "** Error: Script failed" >&2
+	fi
 }
 
 function umount_all()
