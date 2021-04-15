@@ -10,8 +10,9 @@ function out()
 	trap - EXIT INT TERM HUP
 
 	# Cleanup
-	rm -f "${ROOT_DIR}"/etc/resolv.conf
 	if [ -e "${ROOT_DIR}"/etc/resolv.orig ] ; then
+		echo "-- Restore /etc/resolv.conf"
+		rm -f "${ROOT_DIR}"/etc/resolv.conf
 		mv "${ROOT_DIR}"/etc/resolv.orig "${ROOT_DIR}"/etc/resolv.conf
 	fi
 
@@ -42,6 +43,7 @@ function install_packages()
 	printf -- "--   %s\n" "${packages[@]}"
 
 	if [ -e "${ROOT_DIR}"/etc/resolv.conf ] ; then
+		echo "-- Backup /etc/resolv.conf"
 		mv "${ROOT_DIR}"/etc/resolv.conf "${ROOT_DIR}"/etc/resolv.orig
 	fi
 	cp /etc/resolv.conf "${ROOT_DIR}"/etc/resolv.conf
