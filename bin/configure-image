@@ -23,6 +23,27 @@ function out()
 	exit "${rc}"
 }
 
+function remove_packages()
+{
+	local packages package
+
+	packages=()
+	for package in unattended-upgrades ; do
+		if dpkg -l "${package}" >/dev/null 2>&1 ; then
+			packages+=("${package}")
+		fi
+	done
+
+	if [ "${#packages[@]}" -eq 0 ] ; then
+		return
+	fi
+
+	echo "-- Remove package"
+	printf -- "--   %s\n" "${packages[@]}"
+
+	chroot "${ROOT_DIR}" apt-get -y purge "${packages[@]}"
+}
+
 function install_packages()
 {
 	local packages
@@ -302,6 +323,7 @@ else
 	exit 1
 fi
 
+remove_packages
 install_packages
 install_tools
 set_cloud_init_config
@@ -310,7 +332,6 @@ set_console "console=tty1" "console=serial0,115200"
 set_kernel_loglevel "8"
 add_user "ubuntu"
 set_service "enable" "ssh"
-set_service "disable" "unattended-upgrades"
 enable_wifi
 add_r8152_net_module
 
