@@ -48,10 +48,10 @@ function install_packages()
 	fi
 	cp /etc/resolv.conf "${ROOT_DIR}"/etc/resolv.conf
 
-	chroot "${ROOT_DIR}" sudo apt-get update
-	chroot "${ROOT_DIR}" sudo apt-get -y --no-install-recommends install \
+	chroot "${ROOT_DIR}" apt-get update
+	chroot "${ROOT_DIR}" apt-get -y --no-install-recommends install \
 		   "${packages[@]}"
-	chroot "${ROOT_DIR}" sudo apt-get -y clean
+	chroot "${ROOT_DIR}" apt-get -y clean
 }
 
 function install_tools()
