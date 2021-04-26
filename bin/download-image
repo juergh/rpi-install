@@ -67,16 +67,18 @@ Optional arguments:
                          defaults to the first release of the list.
 
 Image series:
-  Ubuntu Desktop:  groovy-desktop, hisrsute-desktop
-  Ubuntu Classic:  xenial, bionic, focal, ...
-  Ubuntu Core:     core16, core18, core20
-  Raspberry Pi OS: raspios
+  Ubuntu Desktop:          groovy-desktop, hirsute-desktop
+  Ubuntu Classic:          xenial, bionic, focal, ...
+  Ubuntu Core:             core16, core18, core20
+  Raspberry Pi OS Lite:    raspios
+  Raspberry Pi OS Desktop: raspios-desktop
 
 Image releases:
-  Ubuntu Desktop:  daily, release
-  Ubuntu Classic:  daily, release
-  Ubuntu Core:     edge, beta, stable
-  Raspberry Pi OS: latest
+  Ubuntu Desktop:          daily, release
+  Ubuntu Classic:          daily, release
+  Ubuntu Core:             edge, beta, stable
+  Raspberry Pi OS Lite:    latest
+  Raspberry Pi OS Desktop: latest
 EOF
 }
 
@@ -85,7 +87,7 @@ series=
 arch=
 
 while [ $# -gt 0 ] ; do
-    case "${1}" in
+	case "${1}" in
 		-h|--help)
 			usage
 			exit
@@ -171,12 +173,12 @@ case "${series}" in
 		;;
 
 	# Ubuntu Desktop
-	groovy-desktop)
+	groovy-desktop|hirsute-desktop)
 		if [ "${arch}" != "arm64" ] ; then
 			echo "** Error: Desktop images are only supported on arm64" >&2
 			exit 1
 		fi
-		image=groovy-preinstalled-desktop-arm64+raspi.img.xz
+		image=${series%-desktop}-preinstalled-desktop-arm64+raspi.img.xz
 		daily_devel_url=http://cdimage.ubuntu.com/daily-preinstalled/current/
 		release_image_pattern="ubuntu-.*?-preinstalled-desktop-arm64\+raspi\.img\.xz"
 		release_url=http://cdimage.ubuntu.com/releases/${series%-desktop}/release/
@@ -242,10 +244,20 @@ case "${series}" in
 		esac
 		;;
 
-	# Raspberry Pi OS
+	# Raspberry Pi OS Lite
 	raspios)
 		image=raspios-lite-${arch}.img.zip
 		remote_image=raspios_lite_${arch}_latest
+		latest_url=https://downloads.raspberrypi.org/
+
+		# Download the latest image
+		download_image "${latest_url}" "${remote_image}" "${image}"
+		;;
+
+	# Raspberry Pi OS Desktop
+	raspios-desktop)
+		image=raspios-desktop-${arch}.img.zip
+		remote_image=raspios_${arch}_latest
 		latest_url=https://downloads.raspberrypi.org/
 
 		# Download the latest image
