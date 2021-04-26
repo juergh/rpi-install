@@ -154,6 +154,9 @@ echo "-- Copy kernel modules"
 
 mods=(
 	r8152.ko
+	uas.ko
+	usb-storage.ko
+
 )
 for mod in "${mods[@]}" ; do
 	while IFS= read -r m ; do
