@@ -28,7 +28,7 @@ function remove_packages()
 	local packages package
 
 	packages=()
-	for package in unattended-upgrades ; do
+	for package in unattended-upgrades needrestart ; do
 		if dpkg -l "${package}" >/dev/null 2>&1 ; then
 			packages+=("${package}")
 		fi
