@@ -67,7 +67,7 @@ Optional arguments:
                          defaults to the first release of the list.
 
 Image series:
-  Ubuntu Desktop:          groovy-desktop, hirsute-desktop
+  Ubuntu Desktop:          groovy-desktop, hirsute-desktop, ...
   Ubuntu Classic:          xenial, bionic, focal, ...
   Ubuntu Core:             core16, core18, core20
   Raspberry Pi OS Lite:    raspios
@@ -135,7 +135,7 @@ esac
 case "${series}" in
 
 	# Ubuntu Classic
-	bionic|focal|groovy|hirsute)
+	bionic|focal|groovy|hirsute|impish)
 		image=${series}-preinstalled-server-${arch}+${flavor}.img.xz
 		daily_devel_url=http://cdimage.ubuntu.com/ubuntu-server/daily-preinstalled/current/
 		daily_url=http://cdimage.ubuntu.com/ubuntu-server/${series}/daily-preinstalled/current/
@@ -173,7 +173,7 @@ case "${series}" in
 		;;
 
 	# Ubuntu Desktop
-	groovy-desktop|hirsute-desktop)
+	groovy-desktop|hirsute-desktop|impish-desktop)
 		if [ "${arch}" != "arm64" ] ; then
 			echo "** Error: Desktop images are only supported on arm64" >&2
 			exit 1
