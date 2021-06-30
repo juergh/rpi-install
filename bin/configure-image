@@ -10,7 +10,8 @@ function out()
 	trap - EXIT INT TERM HUP
 
 	# Cleanup
-	if [ -e "${ROOT_DIR}"/etc/resolv.orig ] ; then
+	if [ -e "${ROOT_DIR}"/etc/resolv.orig ] || \
+	   [ -h "${ROOT_DIR}"/etc/resolv.orig ] ; then
 		echo "-- Restore /etc/resolv.conf"
 		rm -f "${ROOT_DIR}"/etc/resolv.conf
 		mv "${ROOT_DIR}"/etc/resolv.orig "${ROOT_DIR}"/etc/resolv.conf
