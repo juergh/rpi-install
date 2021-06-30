@@ -115,17 +115,11 @@ function set_hostname()
 
 function set_console()
 {
-	local cmdline_file cmdline opts opt
+	local cmdline opts opt
 	echo "-- Set console (${*})"
 
-	if [ -e "${BOOT_DIR}"/nobtcmd.txt ] ; then
-		cmdline_file="${BOOT_DIR}"/nobtcmd.txt
-	else
-		cmdline_file="${BOOT_DIR}"/cmdline.txt
-	fi
-	readarray -t opts < <(head -1 "${cmdline_file}" | tr ' ' '\n')
-
 	cmdline=()
+	readarray -t opts < <(head -1 "${CMDLINE_TXT}" | tr ' ' '\n')
 	for opt in "${opts[@]}" ; do
 		case "${opt}" in
 			console=*) ;;              # Drop the option
@@ -133,7 +127,7 @@ function set_console()
 		esac
 	done
 	# cmdline+=("earlycon=pl011,0xfe201000") # This option might break boot
-	echo "${cmdline[*]} ${*}" > "${cmdline_file}"
+	echo "${cmdline[*]} ${*}" > "${CMDLINE_TXT}"
 
 	# Update config.txt
 	cat << EOF >> "${BOOT_DIR}"/config.txt
@@ -159,14 +153,14 @@ function set_kernel_loglevel()
 	echo "-- Set kernel loglevel (${1})"
 
 	cmdline=()
-	readarray -t opts < <(head -1 "${BOOT_DIR}"/cmdline.txt | tr ' ' '\n')
+	readarray -t opts < <(head -1 "${CMDLINE_TXT}" | tr ' ' '\n')
 	for opt in "${opts[@]}" ; do
 		case "${opt}" in
 			loglevel=*|ignore_loglevel|quiet) ;;  # Drop the option
 			*) cmdline+=("${opt}") ;;             # Keep the option
 		esac
 	done
-	echo "${cmdline[*]} loglevel=${1}" > "${BOOT_DIR}"/cmdline.txt
+	echo "${cmdline[*]} loglevel=${1}" > "${CMDLINE_TXT}"
 
 	sed -i 's/^kernel.printk/# rpi-install kernel.printk/' \
 		"${ROOT_DIR}"/etc/sysctl.d/*.conf
@@ -330,6 +324,12 @@ else
 	exit 1
 fi
 
+if [ -e "${BOOT_DIR}"/nobtcmd.txt ] ; then
+	CMDLINE_TXT="${BOOT_DIR}"/nobtcmd.txt
+else
+	CMDLINE_TXT="${BOOT_DIR}"/cmdline.txt
+fi
+
 remove_packages
 install_packages
 install_tools
@@ -343,7 +343,7 @@ enable_wifi
 add_r8152_net_module
 
 # HACK: Disable persistent net names
-if ! grep -q 'net.ifnames=0' "${BOOT_DIR}"/cmdline.txt ; then
+if ! grep -q 'net.ifnames=0' "${CMDLINE_TXT}" ; then
 	echo "-- Disable persistent net names"
-	sed -i 's/^/net.ifnames=0 /' "${BOOT_DIR}"/cmdline.txt
+	sed -i 's/^/net.ifnames=0 /' "${CMDLINE_TXT}"
 fi
