@@ -115,11 +115,17 @@ function set_hostname()
 
 function set_console()
 {
-	local cmdline opts opt
+	local cmdline_file cmdline opts opt
 	echo "-- Set console (${*})"
 
+	if [ -e "${BOOT_DIR}"/nobtcmd.txt ] ; then
+		cmdline_file="${BOOT_DIR}"/nobtcmd.txt
+	else
+		cmdline_file="${BOOT_DIR}"/cmdline.txt
+	fi
+	readarray -t opts < <(head -1 "${cmdline_file}" | tr ' ' '\n')
+
 	cmdline=()
-	readarray -t opts < <(head -1 "${BOOT_DIR}"/cmdline.txt | tr ' ' '\n')
 	for opt in "${opts[@]}" ; do
 		case "${opt}" in
 			console=*) ;;              # Drop the option
@@ -127,7 +133,7 @@ function set_console()
 		esac
 	done
 	# cmdline+=("earlycon=pl011,0xfe201000") # This option might break boot
-	echo "${cmdline[*]} ${*}" > "${BOOT_DIR}"/cmdline.txt
+	echo "${cmdline[*]} ${*}" > "${cmdline_file}"
 
 	# Update config.txt
 	cat << EOF >> "${BOOT_DIR}"/config.txt
