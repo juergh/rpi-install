@@ -60,14 +60,15 @@ function install_packages()
 		return
 	fi
 
-	echo "-- Install package"
-	printf -- "--   %s\n" "${packages[@]}"
-
-	if [ -e "${ROOT_DIR}"/etc/resolv.conf ] ; then
+	if [ -e "${ROOT_DIR}"/etc/resolv.conf ] || \
+	   [ -h "${ROOT_DIR}"/etc/resolv.conf ] ; then
 		echo "-- Backup /etc/resolv.conf"
 		mv "${ROOT_DIR}"/etc/resolv.conf "${ROOT_DIR}"/etc/resolv.orig
 	fi
 	cp /etc/resolv.conf "${ROOT_DIR}"/etc/resolv.conf
+
+	echo "-- Install package"
+	printf -- "--   %s\n" "${packages[@]}"
 
 	chroot "${ROOT_DIR}" apt-get update
 	chroot "${ROOT_DIR}" apt-get -y --no-install-recommends install \
