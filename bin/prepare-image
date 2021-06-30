@@ -126,11 +126,11 @@ trap out EXIT INT TERM HUP
 num_parts=$(partx -g "${outfile}" | wc -l)
 if [ "${num_parts}" -eq 1 ] ; then
 	# Mount the boot partition
-	BOOT_DIR=$(partmount -s "${outfile}" 1)
+	BOOT_DIR=$(partmount -rw -s "${outfile}" 1)
 	echo "-- Boot partition mounted on ${BOOT_DIR}"
 elif  [ "${num_parts}" -eq 2 ] ; then
 	# Mount the root partition
-	ROOT_DIR=$(partmount -s "${outfile}" 2)
+	ROOT_DIR=$(partmount -rw -s "${outfile}" 2)
 	# Mount the boot partition
 	if [ -d "${ROOT_DIR}"/boot/firmware ] ; then
 		boot_dir=${ROOT_DIR}/boot/firmware
@@ -140,7 +140,7 @@ elif  [ "${num_parts}" -eq 2 ] ; then
 		echo "** Error: No such boot directory: ${ROOT_DIR}/boot{/firmware,}" >&2
 		exit 1
 	fi
-	BOOT_DIR=$(partmount -s "${outfile}" 1 "${boot_dir}")
+	BOOT_DIR=$(partmount -rw -s "${outfile}" 1 "${boot_dir}")
 	echo "-- Image partitions mounted on ${ROOT_DIR}"
 else
 	echo "** Error: Unsupported number of partitions: ${num_parts}" >&2

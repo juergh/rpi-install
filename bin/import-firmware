@@ -106,7 +106,7 @@ else
 	fi
 
 	# Mount the image
-	MOUNTD=$(partmount -ro -s "${image}" 2)
+	MOUNTD=$(partmount -s "${image}" 2)
 	partmount -ro "${image}" 1 "${MOUNTD}"/boot/firmware > /dev/null
 	rootd=${MOUNTD}
 
