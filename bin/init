@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# Download and install a Raspberry Pi image from a Redfish API server
+# Download and install a Raspberry Pi image from a Bottle-Pi API server
 #
 
-REDFISH_HOST=192.168.99.11:5000
+BOTTLE_PI_HOST=192.168.99.11:5000
 
 echo "-- Run installer"
 
@@ -57,10 +57,10 @@ done
 echo "-- Get an IP"
 dhclient -v
 
-echo "-- Query Redfish host ${REDFISH_HOST}"
+echo "-- Query Bottle-Pi host ${BOTTLE_PI_HOST}"
 # shellcheck disable=SC2002
 serial=$(cat /proc/device-tree/serial-number | tr -d '\0\n')
-data=$(/usr/bin/wget -q -O - "http://${REDFISH_HOST}/redfish/v1/Systems/${serial}/Actions/ComputerSystem.Update" | \
+data=$(/usr/bin/wget -q -O - "http://${BOTTLE_PI_HOST}/redfish/v1/Systems/${serial}/Actions/ComputerSystem.Update" | \
 	   tr -d '\n' | \
 	   sed 's,":\s*",":",g')
 # Extract the update status from the response
@@ -72,7 +72,7 @@ if [ "${status}" = "Pending" ] ; then
 	image=${image%%\"*}
 	if [ -n "${image}" ] ; then
 		# Clear the pending update
-		/usr/bin/wget -q -O - "http://${REDFISH_HOST}/redfish/v1/Systems/${serial}/Actions/ComputerSystem.Update.Delete"
+		/usr/bin/wget -q -O - "http://${BOTTLE_PI_HOST}/redfish/v1/Systems/${serial}/Actions/ComputerSystem.Update.Delete"
 	fi
 fi
 
@@ -83,7 +83,7 @@ sysctl -w vm.dirty_ratio=10
 # Run the interactive installer
 while true ; do
 	if [ -n "${image}" ] ; then
-		image_url="http://${REDFISH_HOST}/redfish/v1/Images/${image#/redfish/v1/Images/}"
+		image_url="http://${BOTTLE_PI_HOST}/redfish/v1/Images/${image#/redfish/v1/Images/}"
 		echo "-- Install image ${image_url}"
 		if /usr/bin/wget -O - "${image_url}" | /usr/bin/gzip -cd > /dev/mmcblk0 ; then
 			sync
