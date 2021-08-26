@@ -60,15 +60,13 @@ dhclient -v
 echo "-- Query Bottle-Pi host ${BOTTLE_PI_HOST}"
 # shellcheck disable=SC2002
 serial=$(cat /proc/device-tree/serial-number | tr -d '\0\n')
-data=$(/usr/bin/wget -q -O - "http://${BOTTLE_PI_HOST}/redfish/v1/Systems/${serial}/Actions/ComputerSystem.Update" | \
-	   tr -d '\n' | \
-	   sed 's,":\s*",":",g')
+resp=$(/usr/bin/wget -q -O - "http://${BOTTLE_PI_HOST}/redfish/v1/Systems/${serial}/Actions/ComputerSystem.Update" | tr -d '\n\t ')
 # Extract the update status from the response
-status=${data#*\"Status\":\"}
+status=${resp#*\"Status\":\"}
 status=${status%%\"*}
 if [ "${status}" = "Pending" ] ; then
 	# Extract the Image name from the respone
-	image=${data#*\"Image\":\"}
+	image=${resp#*\"Image\":\"}
 	image=${image%%\"*}
 	if [ -n "${image}" ] ; then
 		# Clear the pending update
