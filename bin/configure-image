@@ -138,10 +138,11 @@ function set_cmdline()
 	# Update config.txt
 	cat << EOF >> "${BOOT_DIR}"/config.txt
 
-# rpi-install
+# rpi-install CONFIG BEGIN
 [all]
 enable_uart=1
 uart_2ndstage=1
+# rpi-install CONFIG END
 EOF
 
 	# Purge flash-kernel options

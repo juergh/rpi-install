@@ -117,12 +117,13 @@ fi
 
 # Modify config.txt
 echo "-- Modify config.txt"
-sed -i '/^# rpi-install BEGIN$/,/^# rpi-install END$/d' \
+sed -i '/^# rpi-install INSTALL BEGIN$/,/^# rpi-install INSTALL END$/d' \
 	"${boot_dir}"/config.txt
 cat << EOF >> "${boot_dir}"/config.txt
-# rpi-install BEGIN
+
+# rpi-install INSTALL BEGIN
 [all]
 [gpio4=0]
 include install/config.txt
-# rpi-install END
+# rpi-install INSTALL END
 EOF
