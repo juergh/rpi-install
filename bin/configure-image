@@ -114,21 +114,26 @@ function set_hostname()
 	systemctl --root="${ROOT_DIR}" enable rpi-hostname.service
 }
 
-function set_console()
+function set_cmdline()
 {
 	local cmdline opts opt
-	echo "-- Set console (${*})"
+	echo "-- Set cmdline (${*})"
 
 	cmdline=()
 	readarray -t opts < <(head -1 "${CMDLINE_TXT}" | tr ' ' '\n')
 	for opt in "${opts[@]}" ; do
 		case "${opt}" in
-			console=*) ;;              # Drop the option
-			*) cmdline+=("${opt}") ;;  # Keep the option
+			console=*|quiet|splash) ;;  # Drop the option
+			*) cmdline+=("${opt}") ;;   # Keep the option
 		esac
 	done
-	# cmdline+=("earlycon=pl011,0xfe201000") # This option might break boot
 	echo "${cmdline[*]} ${*}" > "${CMDLINE_TXT}"
+
+	# Remove kernel.printk sysctl
+	if [ "$(find "${ROOT_DIR}"/etc/sysctl.d/*.conf | wc -l)" -gt 0 ] ; then
+		sed -i 's/^kernel.printk/# rpi-install kernel.printk/' \
+			"${ROOT_DIR}"/etc/sysctl.d/*.conf
+	fi
 
 	# Update config.txt
 	cat << EOF >> "${BOOT_DIR}"/config.txt
@@ -138,33 +143,13 @@ function set_console()
 enable_uart=1
 EOF
 
-	# Purge flask-kernel options
+	# Purge flash-kernel options
 	if [ -e "${ROOT_DIR}"/etc/default/flash-kernel ] ; then
 		cat << EOF > "${ROOT_DIR}"/etc/default/flash-kernel
 LINUX_KERNEL_CMDLINE=
 LINUX_KERNEL_CMDLINE_DEFAULTS=
 EOF
 	fi
-}
-
-function set_kernel_loglevel()
-{
-	local cmdline opts opt
-
-	echo "-- Set kernel loglevel (${1})"
-
-	cmdline=()
-	readarray -t opts < <(head -1 "${CMDLINE_TXT}" | tr ' ' '\n')
-	for opt in "${opts[@]}" ; do
-		case "${opt}" in
-			loglevel=*|ignore_loglevel|quiet) ;;  # Drop the option
-			*) cmdline+=("${opt}") ;;             # Keep the option
-		esac
-	done
-	echo "${cmdline[*]} loglevel=${1}" > "${CMDLINE_TXT}"
-
-	sed -i 's/^kernel.printk/# rpi-install kernel.printk/' \
-		"${ROOT_DIR}"/etc/sysctl.d/*.conf
 }
 
 function add_user()
@@ -336,8 +321,7 @@ install_packages
 install_tools
 set_cloud_init_config
 set_hostname
-set_console "console=tty1" "console=serial0,115200"
-set_kernel_loglevel "8"
+set_cmdline "console=tty1" "console=serial0,115200 ignore_loglevel"
 add_user "ubuntu"
 set_service "enable" "ssh"
 enable_wifi
