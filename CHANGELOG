@@ -1,3 +1,19 @@
+v0.0.11
+  * init: Load uas
+  * configure-image,rpi-install: Add explicit config fences
+  * configure-image: Enable uart_2ndstage
+  * configure-image: Merge set_console and set_kernel_loglevel
+  * init: Simplify the ComputerSystem.Update response parsing
+  * init: Replace the term 'redfish' with 'bottle-pi'
+  * prepare-image: Add support for core18 images
+  * configure-image: Restore etc/resolv.orig symlink
+  * configure-image: Modify nobtcmd.txt if present (for Bionic)
+  * configure-image: Check for etc/resolv.conf symlink
+  * configure-image: Check for etc/resolv.conf symlink
+  * Mount partitions read-write
+  * Add README
+  * download-image: Add support for impish
+  * configure-image: Purge needrestart
 v0.0.10
   * Update the firmware binaries
   * import-firmware: Add modules uas and usb_storage to the installer
