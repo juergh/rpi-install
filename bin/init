@@ -46,6 +46,7 @@ fi
 echo "-- Load kernel modules"
 depmod
 modprobe r8152
+modprobe uas
 
 echo "-- Wait for /sys/class/net/eth0"
 # shellcheck disable=SC2034
