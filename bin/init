@@ -94,10 +94,10 @@ while true ; do
 
 -- Select an image to install
 
-      1) Hirsute - arm64
-      2) Hirsute - armhf
-      3) Groovy  - arm64
-      4) Groovy  - armhf
+      1) Impish  - arm64
+      2) Impish  - armhf
+      3) Hirsute - arm64
+      4) Hirsute - armhf
       5) Focal   - arm64
       6) Focal   - armhf
       7) Bionic  - arm64
@@ -128,10 +128,10 @@ __EOF__
 		#
 		# Ubuntu Server
 		#
-		1) image=ubuntu-hirsute-arm64 ;;
-		2) image=ubuntu-hirsute-armhf ;;
-		3) image=ubuntu-groovy-arm64  ;;
-		4) image=ubuntu-groovy-armhf  ;;
+		1) image=ubuntu-impish-arm64  ;;
+		2) image=ubuntu-impish-armhf  ;;
+		3) image=ubuntu-hirsute-arm64 ;;
+		4) image=ubuntu-hirsute-armhf ;;
 		5) image=ubuntu-focal-arm64   ;;
 		6) image=ubuntu-focal-armhf   ;;
 		7) image=ubuntu-bionic-arm64  ;;
