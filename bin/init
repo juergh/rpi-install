@@ -86,7 +86,7 @@ boot_dev=/dev/mmcblk0
 while true ; do
 	if [ -n "${image}" ] ; then
 		image_url="http://${BOTTLE_PI_HOST}/redfish/v1/Images/${image#/redfish/v1/Images/}"
-		echo "-- Install image ${image_url}"
+		echo "-- Install image ${image_url} on ${boot_dev}"
 		if /usr/bin/wget -O - "${image_url}" | /usr/bin/gzip -cd | /bin/dd of="${boot_dev}" bs=4k conv=fsync status=none; then
 			sync
 			reboot -f
