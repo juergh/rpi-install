@@ -79,12 +79,15 @@ fi
 sysctl -w vm.dirty_background_ratio=5
 sysctl -w vm.dirty_ratio=10
 
+# The default boot device
+boot_dev=/dev/mmcblk0
+
 # Run the interactive installer
 while true ; do
 	if [ -n "${image}" ] ; then
 		image_url="http://${BOTTLE_PI_HOST}/redfish/v1/Images/${image#/redfish/v1/Images/}"
 		echo "-- Install image ${image_url}"
-		if /usr/bin/wget -O - "${image_url}" | /usr/bin/gzip -cd > /dev/mmcblk0 ; then
+		if /usr/bin/wget -O - "${image_url}" | /usr/bin/gzip -cd | /bin/dd of="${boot_dev}" bs=4k conv=fsync status=none; then
 			sync
 			reboot -f
 		fi
@@ -92,7 +95,7 @@ while true ; do
 
 	cat <<__EOF__
 
--- Select an image to install
+-- Select an image to install on ${boot_dev}
 
       1) Impish  - arm64
       2) Impish  - armhf
@@ -115,6 +118,7 @@ while true ; do
 
      90) Run a shell
      91) Enter an image name manually
+     92) Change the boot device
      99) Reboot
 
 __EOF__
@@ -163,6 +167,11 @@ __EOF__
 			# shellcheck disable=SC2039
 			echo -n "-- Image name: "
 			read -r image
+			;;
+		92)
+			# shellcheck disable=SC2039
+			echo -n "-- Boot device: "
+			read -r boot_dev
 			;;
 		99)
 			sync
