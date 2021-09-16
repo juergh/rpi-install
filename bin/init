@@ -118,7 +118,7 @@ while true ; do
 
      90) Run a shell
      91) Enter an image name manually
-     92) Change the boot device
+     92) Change the installation target device
      99) Reboot
 
 __EOF__
