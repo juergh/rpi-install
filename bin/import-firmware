@@ -107,7 +107,7 @@ else
 
 	# Mount the image
 	MOUNTD=$(partmount -s "${image}" 2)
-	partmount -ro "${image}" 1 "${MOUNTD}"/boot/firmware > /dev/null
+	partmount "${image}" 1 "${MOUNTD}"/boot/firmware > /dev/null
 	rootd=${MOUNTD}
 
 	echo "-- Image partitions mounted on ${MOUNTD}"
@@ -137,6 +137,11 @@ bins=(
 	/bin/busybox
 	/usr/bin/gzip
 	/usr/bin/wget
+	/usr/sbin/badblocks
+	/usr/sbin/e2fsck
+	/usr/sbin/e2label
+	/usr/sbin/fatlabel
+	/usr/sbin/fsck.fat
 	/usr/sbin/dhclient
 	/usr/sbin/dhclient-script
 )
