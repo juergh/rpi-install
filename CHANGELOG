@@ -1,3 +1,8 @@
+v0.0.13
+  * firmware: Update to Focal 20.04.3 armhf
+  * rpi-image: Initial commit
+  * import-firmware: Fix partmount usage and add 'emergency' binaries
+  * init: Show the decive the image is being written to
 v0.0.12
   * init: Support manual selection of the boot device
   * init: Add Impish, drop Groovy
