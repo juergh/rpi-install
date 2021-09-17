@@ -178,18 +178,21 @@ case "${series}" in
 			echo "** Error: Desktop images are only supported on arm64" >&2
 			exit 1
 		fi
-		image=${series%-desktop}-preinstalled-desktop-arm64+raspi.img.xz
-		daily_devel_url=http://cdimage.ubuntu.com/daily-preinstalled/current/
-		release_image_pattern="ubuntu-.*?-preinstalled-desktop-arm64\+raspi\.img\.xz"
-		release_url=http://cdimage.ubuntu.com/releases/${series%-desktop}/release/
+
+		series=${series%-desktop}
+		image=ubuntu-${series}-desktop-arm64+raspi.img.xz
 
 		case "${release}" in
 			""|daily)
 				# Download the daily devel image
-				download_image "${daily_devel_url}" "${image}"
+				daily_devel_url=http://cdimage.ubuntu.com/daily-preinstalled/current/
+				remote_image=${series}-preinstalled-desktop-arm64+raspi.img.xz
+				download_image "${daily_devel_url}" "${remote_image}" "${image}"
 				;;
 			release)
 				# Get the name of the latest release image
+				release_url=http://cdimage.ubuntu.com/releases/${series}/release/
+				release_image_pattern="ubuntu-.*?-preinstalled-desktop-arm64\+raspi\.img\.xz"
 				href=$(curl -s "${release_url}" | \
 						   grep -oP 'href="'"${release_image_pattern}"'"' | \
 						   sort -uV | tail -1)
