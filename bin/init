@@ -26,31 +26,33 @@ mount -t devpts -o noexec,nosuid,gid=5,mode=0620 devpts /dev/pts || true
 mkdir -p /etc /var/lib/dhcp /var/run
 touch /etc/fstab
 
-echo "-- Wait for /dev/mmcblk0p1"
-# shellcheck disable=SC2034
-for i in $(seq 10) ; do
-	[ -b /dev/mmcblk0p1 ] && break
-    sleep .5
-done
-
-echo "-- Mount /dev/mmcblk0p1"
-if mount /dev/mmcblk0p1 /boot ; then
-	# Clear the one-time boot flag
-	sed -i 's,^# rpi-install ONCE ,,' /boot/config.txt
-
-	echo "-- Unmount /dev/mmcblk0p1"
-	sync
-	umount /boot
-fi
-
 echo "-- Load kernel modules"
 depmod
 modprobe r8152
 modprobe uas
 
+echo "-- Wait for /dev/mmcblk0p1 or /dev/sda1"
+for _ in $(seq 10) ; do
+	if [ -b /dev/mmcblk0p1 ] ; then
+		boot_dev=/dev/mmcblk0
+		boot_part=/dev/mmcblk0p1
+		break
+	elif [ -b /dev/sda1 ] ; then
+		boot_dev=/dev/sda
+		boot_part=/dev/sda1
+		break
+	fi
+    sleep .5
+done
+
+echo "-- Clear installer boot flag on ${boot_part}"
+if mount "${boot_part}" /boot ; then
+	sed -i 's,^# rpi-install ONCE ,,' /boot/config.txt
+	umount /boot
+fi
+
 echo "-- Wait for /sys/class/net/eth0"
-# shellcheck disable=SC2034
-for i in $(seq 10) ; do
+for _ in $(seq 10) ; do
 	[ -e /sys/class/net/eth0 ] && break
 	sleep .5
 done
@@ -78,9 +80,6 @@ fi
 # 'Fix' 'Workqueue: events_freezable mmc_rescan' errors
 sysctl -w vm.dirty_background_ratio=5
 sysctl -w vm.dirty_ratio=10
-
-# The default boot device
-boot_dev=/dev/mmcblk0
 
 # Run the interactive installer
 while true ; do
@@ -113,8 +112,12 @@ while true ; do
      14) Core16 - arm64
      15) Core16 - armhf
 
-     20) Raspberry Pi OS Lite - arm64
-     21) Raspberry Pi OS Lite - armhf
+     20) Raspberry Pi OS Lite    - arm64
+     21) Raspberry Pi OS Lite    - armhf
+     22) Raspberry Pi OS Full    - arm64
+     23) Raspberry Pi OS Full    - armhf
+     24) Raspberry Pi OS Desktop - arm64
+     25) Raspberry Pi OS Desktop - armhf
 
      90) Run a shell
      91) Enter an image name manually
@@ -156,6 +159,10 @@ __EOF__
 		#
 		20) image=raspios-lite-arm64 ;;
 		21) image=raspios-lite-armhf ;;
+		22) image=raspios-full-arm64 ;;
+		23) image=raspios-full-armhf ;;
+		24) image=raspios-desktop-arm64 ;;
+		25) image=raspios-desktop-armhf ;;
 
 		#
 		# Misc options
