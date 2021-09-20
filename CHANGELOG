@@ -1,3 +1,9 @@
+v0.0.14
+  * download-image: Simplify and extend the image download
+  * init: Detect and use /dev/sda as a boot/installation device
+  * download-image: Rename a downloaded desktop image
+  * cmdline.txt: Add maxcpus=1
+  * init: Clarify the menu
 v0.0.13
   * firmware: Update to Focal 20.04.3 armhf
   * rpi-image: Initial commit
