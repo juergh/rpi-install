@@ -8,45 +8,146 @@ function out()
 	local rc=${?}
 
 	if [ "${rc}" -ne 0 ] ; then
-		echo "** Error: Script failed" >&2
+		echo "-- Error: Script failed" >&2
 	fi
 }
 
 function download_image()
 {
-	local base_url=${1} remote_image=${2} local_image=${3:-}
-	local sha256_file sha256_sum
+	local image_url=${1} image=${2}
 
-	if [ -z "${local_image}" ] ; then
-		local_image=${remote_image}
-	fi
+	echo "-- Trying ${image_url}"
 
-	echo "-- Trying ${base_url%/}/${remote_image}"
-
-	# Check if a download is necessary
-	sha256_file=${local_image}.sha256sum
-	if [ -e "${local_image}" ] && [ -e "${sha256_file}" ] && \
-		   curl --fail --head "${base_url}"/SHA256SUMS >/dev/null 2>&1 ; then
-		sha256_sum=$(awk '{ print $1 }' "${sha256_file}")
-		if [ -n "${sha256_sum}" ] && \
-			   curl --fail --no-progress-meter "${base_url}"/SHA256SUMS | \
-				   grep -q "${sha256_sum}" ; then
-			echo "-- Image is up-to-date: ${image}"
-			return 0
-		fi
+	# Check if the remote file exists
+	if ! curl --fail --head "${image_url}" >/dev/null 2>&1 ; then
+		echo "-- Error: Remote file not found" >&2
+		return 1
 	fi
 
 	# Download the image
-	if ! curl --fail --head "${base_url}/${remote_image}" >/dev/null 2>&1 ; then
-		echo "** Error: Remote file not found" >&2
-		return 1
+	wget --no-verbose --show-progress -O "${image}" "${image_url}" || return 1
+
+	echo "-- Downloaded image ${image}"
+}
+
+function download_ubuntu_classic()
+{
+	local series=${1} flavor=${2} arch=${3} release=${4}
+	local path raspi url remote_image image_pattern href image
+
+	path=
+	if [ "${flavor}" = "server" ] ; then
+		path="ubuntu-server"
 	fi
-	wget -O "${local_image}" "${base_url}/${remote_image}" || return 1
 
-	# Create the sha256sum file
-	sha256sum "${local_image}" > "${sha256_file}" || return 1
+	raspi=raspi
+	if [ "${series}" = "bionic" ] ; then
+		raspi=raspi3
+	fi
 
-	echo "-- Downloaded image ${local_image}"
+	case "${release}" in
+		""|devel)
+			url=http://cdimage.ubuntu.com/${path}/daily-preinstalled/current/
+			remote_image=${series}-preinstalled-${flavor}-${arch}+${raspi}.img.xz
+			;;
+		daily)
+			url=http://cdimage.ubuntu.com/${path}/${series}/daily-preinstalled/current/
+			remote_image=${series}-preinstalled-${flavor}-${arch}+${raspi}.img.xz
+			;;
+		release)
+			# Get the name of the latest release image
+			url=http://cdimage.ubuntu.com/releases/${series}/release/
+			image_pattern="ubuntu-.*?-preinstalled-${flavor}-${arch}\+${raspi}\.img\.xz"
+			href=$(curl -s "${url}" | \
+					   grep -oP 'href="'"${image_pattern}"'"' | \
+					   sort -uV | tail -1)
+			remote_image=${href#href=\"}
+			remote_image=${remote_image%\"}
+			if [ -z "${remote_image}" ] ; then
+				echo "-- Error: Unable to determine release image name" >&2
+				exit 1
+			fi
+			;;
+		*)
+			echo "-- Error: Invalid release: ${release}" >&2
+			exit 1
+			;;
+	esac
+
+	image=ubuntu-${series}-${flavor}-${arch}+raspi.img.xz
+
+	# Download the image
+	if ! download_image "${url}/${remote_image}" "${image}" ; then
+		case "${release}" in
+			""|devel)
+				download_ubuntu_classic "${series}" "${flavor}" "${arch}" daily
+				;;
+			daily)
+				download_ubuntu_classic "${series}" "${flavor}" "${arch}" release
+				;;
+			release)
+				exit 1
+				;;
+		esac
+	fi
+}
+
+function download_ubuntu_core()
+{
+	local series=${1} arch=${2} release=${3}
+	local year url raspi remote_image image
+
+	year=${series#core}
+	case "${release}" in
+		""|edge)
+			url=http://cdimage.ubuntu.com/ubuntu-core/${year}/dangerous-edge/pending/
+			;;
+		beta)
+			url=http://cdimage.ubuntu.com/ubuntu-core/${year}/dangerous-beta/current/
+			;;
+		stable)
+			url=http://cdimage.ubuntu.com/ubuntu-core/${year}/stable/current/
+			;;
+		*)
+			echo "-- Error: Invalid release: ${release}" >&2
+			exit 1
+			;;
+	esac
+
+	raspi=raspi
+	if [ "${series}" = "core18" ] ; then
+		raspi=raspi3
+	fi
+	remote_image=ubuntu-core-${year}-${arch}+${raspi}.img.xz
+	image=ubuntu-${release}-${arch}+raspi.img.xz
+
+	# Donwload the image
+	download_image "${url}/${remote_image}" "${image}"
+}
+
+function download_raspios()
+{
+	local flavor=${1} arch=${2}
+	local remote_image url image
+
+	case "${flavor}" in
+		lite|full)
+			remote_image=raspios_${flavor}_${arch}_latest
+			;;
+		desktop)
+			remote_image=raspios_${arch}_latest
+			;;
+		*)
+			echo "-- Error: Invalid flavor: ${flavor}" >&2
+			exit 1
+			;;
+	esac
+
+	url=https://downloads.raspberrypi.org/
+    image=raspios-${flavor}-${arch}.img.zip
+
+	# Download the image
+	download_image "${url}/${remote_image}" "${image}"
 }
 
 function usage()
@@ -102,7 +203,7 @@ while [ $# -gt 0 ] ; do
 			elif [ -z "${arch}" ] ; then
 				arch=${1}
 			else
-				echo "** Error: Invalid argument: ${1}" >&2
+				echo "-- Error: Invalid argument: ${1}" >&2
 				exit 2
 			fi
 			;;
@@ -116,160 +217,43 @@ if [ -z "${series}" ] || [ -z "${arch}" ] ; then
 fi
 
 if [ "${arch}" != "armhf" ] && [ "${arch}" != "arm64" ] ; then
-	echo "** Error: Invalid architecture: ${arch}" >&2
+	echo "-- Error: Invalid architecture: ${arch}" >&2
 	exit 1
 fi
 
 trap out EXIT INT TERM HUP
 
-# Set the image flavor name depending on the series
-case "${series}" in
-	bionic|core18)
-		flavor=raspi3
-		;;
-	*)
-		flavor=raspi
-		;;
-esac
-
 case "${series}" in
 
 	# Ubuntu Classic
 	bionic|focal|groovy|hirsute|impish)
-		image=${series}-preinstalled-server-${arch}+${flavor}.img.xz
-		daily_devel_url=http://cdimage.ubuntu.com/ubuntu-server/daily-preinstalled/current/
-		daily_url=http://cdimage.ubuntu.com/ubuntu-server/${series}/daily-preinstalled/current/
-		release_image_pattern="ubuntu-.*?-preinstalled-server-${arch}\+${flavor}\.img\.xz"
-		release_url=http://cdimage.ubuntu.com/releases/${series}/release/
-
-		case "${release}" in
-			""|daily)
-				# Download the daily devel image
-				if ! download_image "${daily_devel_url}" "${image}" ; then
-					# Download the daily image
-					download_image "${daily_url}" "${image}"
-				fi
-				;;
-			release)
-				# Get the name of the latest release image
-				href=$(curl -s "${release_url}" | \
-						   grep -oP 'href="'"${release_image_pattern}"'"' | \
-						   sort -uV | tail -1)
-				remote_image=${href#href=\"}
-				remote_image=${remote_image%\"}
-				if [ -z "${remote_image}" ] ; then
-					echo "** Error: Unable to determine release image name" >&2
-					exit 1
-				fi
-
-				# Download the latest release image
-				download_image "${release_url}" "${remote_image}" "${image}"
-				;;
-			*)
-				echo "** Error: Invalid release: ${release}" >&2
-				exit 1
-				;;
-		esac
+		download_ubuntu_classic "${series}" server "${arch}" "${release}"
 		;;
 
 	# Ubuntu Desktop
 	groovy-desktop|hirsute-desktop|impish-desktop)
 		if [ "${arch}" != "arm64" ] ; then
-			echo "** Error: Desktop images are only supported on arm64" >&2
+			echo "-- Error: Desktop images are only supported on arm64" >&2
 			exit 1
 		fi
-
-		series=${series%-desktop}
-		image=ubuntu-${series}-desktop-arm64+raspi.img.xz
-
-		case "${release}" in
-			""|daily)
-				# Download the daily devel image
-				daily_devel_url=http://cdimage.ubuntu.com/daily-preinstalled/current/
-				remote_image=${series}-preinstalled-desktop-arm64+raspi.img.xz
-				download_image "${daily_devel_url}" "${remote_image}" "${image}"
-				;;
-			release)
-				# Get the name of the latest release image
-				release_url=http://cdimage.ubuntu.com/releases/${series}/release/
-				release_image_pattern="ubuntu-.*?-preinstalled-desktop-arm64\+raspi\.img\.xz"
-				href=$(curl -s "${release_url}" | \
-						   grep -oP 'href="'"${release_image_pattern}"'"' | \
-						   sort -uV | tail -1)
-				remote_image=${href#href=\"}
-				remote_image=${remote_image%\"}
-				if [ -z "${remote_image}" ] ; then
-					echo "** Error: Unable to determine release image name" >&2
-					exit 1
-				fi
-
-				# Download the latest release image
-				download_image "${release_url}" "${remote_image}" "${image}"
-				;;
-			*)
-				echo "** Error: Invalid release: ${release}" >&2
-				exit 1
-				;;
-		esac
+		download_ubuntu_classic "${series%-desktop}" desktop arm64 "${release}"
 		;;
 
 	# Ubuntu Core
 	core18|core20)
-		year=${series#core}
-		image=ubuntu-core-${year}-${arch}+${flavor}.img.xz
-		edge=dangerous-edge
-		beta=dangerous-beta
-		if [ "${series}" = "core18" ] ; then
-			edge=edge
-			beta=beta
-		fi
-		edge_url=http://cdimage.ubuntu.com/ubuntu-core/${year}/${edge}/pending/
-		beta_url=http://cdimage.ubuntu.com/ubuntu-core/${year}/${beta}/current/
-		stable_url=http://cdimage.ubuntu.com/ubuntu-core/${year}/stable/current/
-
-		case "${release}" in
-			""|edge)
-				# Donwload the edge image
-				download_image "${edge_url}" "${image}"
-				;;
-			beta)
-				# Donwload the beta image
-				download_image "${beta_url}" "${image}"
-				;;
-			stable)
-				# Download the stable image
-				download_image "${stable_url}" "${image}"
-				;;
-			*)
-				echo "** Error: Invalid release: ${release}" >&2
-				exit 1
-				;;
-		esac
+		download_ubuntu_core "${series}" "${arch}" "${release}"
 		;;
 
-	# Raspberry Pi OS Lite
-	raspios)
-		image=raspios-lite-${arch}.img.zip
-		remote_image=raspios_lite_${arch}_latest
-		latest_url=https://downloads.raspberrypi.org/
-
-		# Download the latest image
-		download_image "${latest_url}" "${remote_image}" "${image}"
-		;;
-
-	# Raspberry Pi OS Desktop
-	raspios-desktop)
-		image=raspios-desktop-${arch}.img.zip
-		remote_image=raspios_${arch}_latest
-		latest_url=https://downloads.raspberrypi.org/
-
-		# Download the latest image
-		download_image "${latest_url}" "${remote_image}" "${image}"
+	# Raspberry Pi OS
+	raspios|rapios-lite|raspios-full|raspios-desktop)
+		flavor=${series#raspios}
+		flavor=${flavor#-:-lite}
+		download_raspios "${flavor}" "${arch}"
 		;;
 
 	*)
 		trap - EXIT INT TERM HUP
-		echo "** Error: Invalid series: ${series}" >&2
+		echo "-- Error: Invalid series: ${series}" >&2
 		exit 1
 		;;
 
