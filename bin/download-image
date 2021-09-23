@@ -32,7 +32,7 @@ function download_image()
 
 function download_ubuntu_classic()
 {
-	local series=${1} flavor=${2} arch=${3} channel=${4}
+	local release=${1} flavor=${2} arch=${3} channel=${4}
 	local path raspi url remote_image image_pattern href image
 
 	path=
@@ -41,22 +41,22 @@ function download_ubuntu_classic()
 	fi
 
 	raspi=raspi
-	if [ "${series}" = "bionic" ] ; then
+	if [ "${release}" = "bionic" ] ; then
 		raspi=raspi3
 	fi
 
 	case "${channel}" in
 		""|devel)
 			url=http://cdimage.ubuntu.com/${path}/daily-preinstalled/current/
-			remote_image=${series}-preinstalled-${flavor}-${arch}+${raspi}.img.xz
+			remote_image=${release}-preinstalled-${flavor}-${arch}+${raspi}.img.xz
 			;;
 		daily)
-			url=http://cdimage.ubuntu.com/${path}/${series}/daily-preinstalled/current/
-			remote_image=${series}-preinstalled-${flavor}-${arch}+${raspi}.img.xz
+			url=http://cdimage.ubuntu.com/${path}/${release}/daily-preinstalled/current/
+			remote_image=${release}-preinstalled-${flavor}-${arch}+${raspi}.img.xz
 			;;
 		release)
 			# Get the name of the latest release image
-			url=http://cdimage.ubuntu.com/releases/${series}/release/
+			url=http://cdimage.ubuntu.com/releases/${release}/release/
 			image_pattern="ubuntu-.*?-preinstalled-${flavor}-${arch}\+${raspi}\.img\.xz"
 			href=$(curl -s "${url}" | \
 					   grep -oP 'href="'"${image_pattern}"'"' | \
@@ -74,16 +74,16 @@ function download_ubuntu_classic()
 			;;
 	esac
 
-	image=ubuntu-${series}-${flavor}-${arch}+raspi.img.xz
+	image=${release}-${flavor}-${arch}+raspi.img.xz
 
 	# Download the image
 	if ! download_image "${url}/${remote_image}" "${image}" ; then
 		case "${channel}" in
 			""|devel)
-				download_ubuntu_classic "${series}" "${flavor}" "${arch}" daily
+				download_ubuntu_classic "${release}" "${flavor}" "${arch}" daily
 				;;
 			daily)
-				download_ubuntu_classic "${series}" "${flavor}" "${arch}" release
+				download_ubuntu_classic "${release}" "${flavor}" "${arch}" release
 				;;
 			release)
 				exit 1
@@ -94,19 +94,18 @@ function download_ubuntu_classic()
 
 function download_ubuntu_core()
 {
-	local series=${1} arch=${2} channel=${3}
-	local year url raspi remote_image image
+	local release=${1} arch=${2} channel=${3}
+	local url raspi remote_image image
 
-	year=${series#core}
 	case "${channel}" in
 		""|edge)
-			url=http://cdimage.ubuntu.com/ubuntu-core/${year}/dangerous-edge/pending/
+			url=http://cdimage.ubuntu.com/ubuntu-core/${release}/dangerous-edge/pending/
 			;;
 		beta)
-			url=http://cdimage.ubuntu.com/ubuntu-core/${year}/dangerous-beta/current/
+			url=http://cdimage.ubuntu.com/ubuntu-core/${release}/dangerous-beta/current/
 			;;
 		stable)
-			url=http://cdimage.ubuntu.com/ubuntu-core/${year}/stable/current/
+			url=http://cdimage.ubuntu.com/ubuntu-core/${release}/stable/current/
 			;;
 		*)
 			echo "-- Error: Invalid channel: ${channel}" >&2
@@ -115,11 +114,11 @@ function download_ubuntu_core()
 	esac
 
 	raspi=raspi
-	if [ "${series}" = "core18" ] ; then
+	if [ "${release}" = "18" ] ; then
 		raspi=raspi3
 	fi
-	remote_image=ubuntu-core-${year}-${arch}+${raspi}.img.xz
-	image=ubuntu-${channel}-${arch}+raspi.img.xz
+	remote_image=ubuntu-core-${release}-${arch}+${raspi}.img.xz
+	image=core-${release}-${arch}+raspi.img.xz
 
 	# Donwload the image
 	download_image "${url}/${remote_image}" "${image}"
@@ -128,23 +127,11 @@ function download_ubuntu_core()
 function download_raspios()
 {
 	local flavor=${1} arch=${2}
-	local remote_image url image
-
-	case "${flavor}" in
-		lite|full)
-			remote_image=raspios_${flavor}_${arch}_latest
-			;;
-		desktop)
-			remote_image=raspios_${arch}_latest
-			;;
-		*)
-			echo "-- Error: Invalid flavor: ${flavor}" >&2
-			exit 1
-			;;
-	esac
+	local url remote_image image
 
 	url=https://downloads.raspberrypi.org/
-    image=raspios-${flavor}-${arch}.img.zip
+	remote_image=raspios_${flavor}_${arch}_latest
+	image=raspios-${flavor}-${arch}.img.zip
 
 	# Download the image
 	download_image "${url}/${remote_image}" "${image}"
@@ -153,38 +140,38 @@ function download_raspios()
 function usage()
 {
 	cat <<EOF
-Usage: download-image [-h] [-c CHANNEL] SERIES ARCH
+Usage: download-image [-h] [-c CHANNEL] DISTRO ARCH
 
 Download a Raspberry Pi image.
 
 Positional argument:
-  SERIES                 The series name, i.e., groovy, core18, raspios, ...
-  ARCH                   The architecture of the image (armhf or arm64).
+  DISTRO                   The distro name, i.e., groovy, core18, raspios, ...
+  ARCH                     The architecture of the image (armhf or arm64).
 
 Optional arguments:
-  -h, --help             Show this help text and exit.
-  -c, --channel CHANNEL  Download the image from channel CHANNEL. See below for
-                         the list of available channels. If not provided,
-                         defaults to the first channel of the list.
+  -h, --help               Show this help text and exit.
+  -c, --channel CHANNEL    Download the image from channel CHANNEL. See below
+                           for the list of available channels. If not provided,
+                           defaults to the first channel of the list.
 
-Image series:
-  Ubuntu Desktop:          groovy-desktop, hirsute-desktop, ...
+Image distros:
   Ubuntu Classic:          xenial, bionic, focal, ...
-  Ubuntu Core:             core16, core18, core20
+  Ubuntu Desktop:          groovy-desktop, hirsute-desktop, ...
+  Ubuntu Core:             core16, core18, core20, ...
   Raspberry Pi OS Lite:    raspios
+  Raspberry Pi OS Full:    raspios-full
   Raspberry Pi OS Desktop: raspios-desktop
 
 Image channels:
-  Ubuntu Desktop:          daily, release
   Ubuntu Classic:          daily, release
+  Ubuntu Desktop:          daily, release
   Ubuntu Core:             edge, beta, stable
-  Raspberry Pi OS Lite:    latest
-  Raspberry Pi OS Desktop: latest
+  Raspberry Pi OS:         latest
 EOF
 }
 
 channel=
-series=
+distro=
 arch=
 
 while [ $# -gt 0 ] ; do
@@ -198,8 +185,8 @@ while [ $# -gt 0 ] ; do
 			channel=${1}
 			;;
 		*)
-			if [ -z "${series}" ] ; then
-				series=${1}
+			if [ -z "${distro}" ] ; then
+				distro=${1}
 			elif [ -z "${arch}" ] ; then
 				arch=${1}
 			else
@@ -211,7 +198,7 @@ while [ $# -gt 0 ] ; do
 	shift
 done
 
-if [ -z "${series}" ] || [ -z "${arch}" ] ; then
+if [ -z "${distro}" ] || [ -z "${arch}" ] ; then
 	usage
 	exit 2
 fi
@@ -223,11 +210,11 @@ fi
 
 trap out EXIT INT TERM HUP
 
-case "${series}" in
+case "${distro}" in
 
 	# Ubuntu Classic
 	bionic|focal|groovy|hirsute|impish)
-		download_ubuntu_classic "${series}" server "${arch}" "${channel}"
+		download_ubuntu_classic "${distro}" server "${arch}" "${channel}"
 		;;
 
 	# Ubuntu Desktop
@@ -236,24 +223,24 @@ case "${series}" in
 			echo "-- Error: Desktop images are only supported on arm64" >&2
 			exit 1
 		fi
-		download_ubuntu_classic "${series%-desktop}" desktop arm64 "${channel}"
+		download_ubuntu_classic "${distro%-desktop}" desktop arm64 "${channel}"
 		;;
 
 	# Ubuntu Core
 	core18|core20)
-		download_ubuntu_core "${series}" "${arch}" "${channel}"
+		download_ubuntu_core "${distro#core}" "${arch}" "${channel}"
 		;;
 
 	# Raspberry Pi OS
 	raspios|rapios-lite|raspios-full|raspios-desktop)
-		flavor=${series#raspios}
+		flavor=${distro#raspios}
 		flavor=${flavor#-:-lite}
 		download_raspios "${flavor}" "${arch}"
 		;;
 
 	*)
 		trap - EXIT INT TERM HUP
-		echo "-- Error: Invalid series: ${series}" >&2
+		echo "-- Error: Invalid distro: ${distro}" >&2
 		exit 1
 		;;
 
