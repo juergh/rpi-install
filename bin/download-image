@@ -14,7 +14,7 @@ function out()
 
 function download_image()
 {
-	local image_url=${1} image=${2}
+	local image_url=${1} outfile=${2}
 
 	echo "-- Trying ${image_url}"
 
@@ -30,15 +30,15 @@ function download_image()
 	fi
 
 	# Download the image
-	wget --no-verbose --show-progress -O "${image}" "${image_url}" || return 1
+	wget --no-verbose --show-progress -O "${outfile}" "${image_url}" || return 1
 
-	echo "-- Downloaded image ${image}"
+	echo "-- Downloaded image to ${outfile}"
 }
 
 function download_ubuntu_classic()
 {
-	local release=${1} flavor=${2} arch=${3} channel=${4}
-	local path raspi url remote_image image_pattern href image
+	local release=${1} flavor=${2} arch=${3} channel=${4} outfile=${5}
+	local path raspi url remote_image image_pattern href
 
 	path=
 	if [ "${flavor}" = "server" ] ; then
@@ -79,16 +79,18 @@ function download_ubuntu_classic()
 			;;
 	esac
 
-	image=${release}-${flavor}-${arch}+raspi.img.xz
+	if [ -z "${outfile}" ] ; then
+		outfile=${release}-${flavor}-${arch}+raspi.img.xz
+	fi
 
 	# Download the image
-	if ! download_image "${url}/${remote_image}" "${image}" ; then
+	if ! download_image "${url}/${remote_image}" "${outfile}" ; then
 		case "${channel}" in
 			""|devel)
-				download_ubuntu_classic "${release}" "${flavor}" "${arch}" daily
+				download_ubuntu_classic "${release}" "${flavor}" "${arch}" daily "${outfile}"
 				;;
 			daily)
-				download_ubuntu_classic "${release}" "${flavor}" "${arch}" release
+				download_ubuntu_classic "${release}" "${flavor}" "${arch}" release "${outfile}"
 				;;
 			release)
 				exit 1
@@ -99,8 +101,8 @@ function download_ubuntu_classic()
 
 function download_ubuntu_core()
 {
-	local release=${1} arch=${2} channel=${3}
-	local url raspi remote_image image
+	local release=${1} arch=${2} channel=${3} outfile=${4}
+	local url raspi remote_image
 
 	case "${channel}" in
 		""|edge)
@@ -123,16 +125,19 @@ function download_ubuntu_core()
 		raspi=raspi3
 	fi
 	remote_image=ubuntu-core-${release}-${arch}+${raspi}.img.xz
-	image=core-${release}-${arch}+raspi.img.xz
+
+	if [ -z "${outfile}" ] ; then
+		outfile=core-${release}-${arch}+raspi.img.xz
+	fi
 
 	# Donwload the image
-	download_image "${url}/${remote_image}" "${image}"
+	download_image "${url}/${remote_image}" "${outfile}"
 }
 
 function download_raspios()
 {
-	local flavor=${1} arch=${2}
-	local image_type url href image_dir remote_image image
+	local flavor=${1} arch=${2} outfile=${3}
+	local image_type url href image_dir remote_image
 
 	case "${flavor}" in
 		lite|full)
@@ -167,22 +172,25 @@ function download_raspios()
 		exit 1
 	fi
 
-	image=raspios-${flavor}-${arch}.img.zip
+	if [ -z "${outfile}" ] ; then
+		outfile=raspios-${flavor}-${arch}.img.zip
+	fi
 
 	# Download the image
-	download_image "${url}/${remote_image}" "${image}"
+	download_image "${url}/${remote_image}" "${outfile}"
 }
 
 function usage()
 {
 	cat <<EOF
-Usage: download-image [-c CHANNEL] [-d] [-h] DISTRO ARCH
+Usage: download-image [-c CHANNEL] [-d] [-h] DISTRO ARCH [OUTFILE]
 
 Download a Raspberry Pi image.
 
 Positional argument:
-  DISTRO                   The distro name, i.e., groovy, core18, raspios, ...
-  ARCH                     The architecture of the image (armhf or arm64).
+  DISTRO                   Distro name, i.e., groovy, core18, raspios, ...
+  ARCH                     Image architecture (armhf or arm64).
+  OUTFILE                  Filename of the downloaded image.
 
 Optional arguments:
   -h, --help               Show this help text and exit.
@@ -213,6 +221,7 @@ DRY_RUN=0
 channel=
 distro=
 arch=
+outfile=
 
 while [ $# -gt 0 ] ; do
 	case "${1}" in
@@ -232,6 +241,8 @@ while [ $# -gt 0 ] ; do
 				distro=${1}
 			elif [ -z "${arch}" ] ; then
 				arch=${1}
+			elif [ -z "${outfile}" ] ; then
+				outfile=${1}
 			else
 				echo "-- Error: Invalid argument: ${1}" >&2
 				exit 2
@@ -278,12 +289,12 @@ case "${distro}" in
 				exit 1
 				;;
 		esac
-		download_ubuntu_classic "${distro%-*}" "${flavor}" "${arch}" "${channel}"
+		download_ubuntu_classic "${distro%-*}" "${flavor}" "${arch}" "${channel}" "${outfile}"
 		;;
 
 	# Ubuntu Core
 	core16|core18|core20)
-		download_ubuntu_core "${distro#core}" "${arch}" "${channel}"
+		download_ubuntu_core "${distro#core}" "${arch}" "${channel}" "${outfile}"
 		;;
 
 	# Raspberry Pi OS
@@ -293,7 +304,7 @@ case "${distro}" in
 		else
 			flavor=${distro#*-}
 		fi
-		download_raspios "${flavor}" "${arch}"
+		download_raspios "${flavor}" "${arch}" "${outfile}"
 		;;
 
 	*)
