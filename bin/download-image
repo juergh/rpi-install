@@ -132,10 +132,41 @@ function download_ubuntu_core()
 function download_raspios()
 {
 	local flavor=${1} arch=${2}
-	local url remote_image image
+	local image_type url href image_dir remote_image image
 
-	url=https://downloads.raspberrypi.org/
-	remote_image=raspios_${flavor}_${arch}_latest
+	case "${flavor}" in
+		lite|full)
+			image_type=raspios_${flavor}_${arch}
+			;;
+		*)
+			image_type=raspios_${arch}
+			;;
+	esac
+
+	# Get the directory component of the latest image
+	url=https://downloads.raspberrypi.org/${image_type}/images/
+	href=$(curl -s "${url}" | \
+			   grep -oP 'href="'"${image_type}-.*?"'"' | \
+			   sort -uV | tail -1)
+	image_dir=${href#href=\"}
+	image_dir=${image_dir%\"}
+	if [ -z "${image_dir}" ] ; then
+		echo "-- Error: Unable to determine image directory" >&2
+		exit 1
+	fi
+
+	# Get the name of the latest image
+	url=https://downloads.raspberrypi.org/${image_type}/images/${image_dir}
+	href=$(curl -s "${url}" | \
+			   grep -oP 'href="'".*?\.zip"'"' | \
+			   sort -uV | tail -1)
+	remote_image=${href#href=\"}
+	remote_image=${remote_image%\"}
+	if [ -z "${remote_image}" ] ; then
+		echo "-- Error: Unable to determine image name" >&2
+		exit 1
+	fi
+
 	image=raspios-${flavor}-${arch}.img.zip
 
 	# Download the image
@@ -166,8 +197,8 @@ Image distros:
   Ubuntu Desktop:          groovy-desktop, hirsute-desktop, ...
   Ubuntu Core:             core16, core18, core20, ...
   Raspberry Pi OS Lite:    raspios
-  Raspberry Pi OS Full:    raspios-full
   Raspberry Pi OS Desktop: raspios-desktop
+  Raspberry Pi OS Full:    raspios-full
 
 Image channels:
   Ubuntu Classic:          daily, release
@@ -225,28 +256,43 @@ trap out EXIT INT TERM HUP
 case "${distro}" in
 
 	# Ubuntu Classic
-	bionic|focal|groovy|hirsute|impish)
-		download_ubuntu_classic "${distro}" server "${arch}" "${channel}"
-		;;
-
-	# Ubuntu Desktop
-	groovy-desktop|hirsute-desktop|impish-desktop)
-		if [ "${arch}" != "arm64" ] ; then
-			echo "-- Error: Desktop images are only supported on arm64" >&2
-			exit 1
-		fi
-		download_ubuntu_classic "${distro%-desktop}" desktop arm64 "${channel}"
+	bionic|focal|hirsute|impish|\
+	bionic-*|focal-*|hirsute-*|impish-*)
+		flavor=${distro#*-}
+		case "${flavor}" in
+			"${distro}")
+				flavor=server
+				;;
+			desktop)
+				if [ "${arch}" != "arm64" ] ; then
+					echo "-- Error: Desktop images are only supported on"\
+						 "arm64" >&2
+					exit 1
+				fi
+				;;
+			server)
+				;;
+			*)
+				trap - EXIT INT TERM HUP
+				echo "-- Error: Invalid distro: ${distro}" >&2
+				exit 1
+				;;
+		esac
+		download_ubuntu_classic "${distro%-*}" "${flavor}" "${arch}" "${channel}"
 		;;
 
 	# Ubuntu Core
-	core18|core20)
+	core16|core18|core20)
 		download_ubuntu_core "${distro#core}" "${arch}" "${channel}"
 		;;
 
 	# Raspberry Pi OS
-	raspios|rapios-lite|raspios-full|raspios-desktop)
-		flavor=${distro#raspios}
-		flavor=${flavor#-:-lite}
+	raspios|raspios-lite|raspios-desktop|raspios-full)
+		if [ "${distro}" = "raspios" ] ; then
+			flavor="lite"
+		else
+			flavor=${distro#*-}
+		fi
 		download_raspios "${flavor}" "${arch}"
 		;;
 
