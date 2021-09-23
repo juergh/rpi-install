@@ -40,9 +40,13 @@ function download_ubuntu_classic()
 	local release=${1} flavor=${2} arch=${3} channel=${4} outfile=${5}
 	local path raspi url remote_image image_pattern href
 
-	path=
-	if [ "${flavor}" = "server" ] ; then
-		path="ubuntu-server"
+	path=ubuntu-server
+	if [ "${flavor}" = "desktop" ] ; then
+		if [ "${arch}" != "arm64" ] ; then
+			echo "-- Error: Desktop images are only supported on arm64" >&2
+			exit 1
+		fi
+		path=
 	fi
 
 	raspi=raspi
@@ -102,17 +106,32 @@ function download_ubuntu_classic()
 function download_ubuntu_core()
 {
 	local release=${1} arch=${2} channel=${3} outfile=${4}
-	local url raspi remote_image
+	local dangerous url raspi remote_image
+
+	case "${release}" in
+		16|18)
+			if [ "${arch}" != "armhf" ] ; then
+				echo "-- Error: Core16 and Core18 images are only supported on armhf" >&2
+				exit 1
+			fi
+			dangerous=
+			raspi=raspi3
+			;;
+		*)
+			dangerous=dangerous-
+			raspi=raspi
+			;;
+	esac
 
 	case "${channel}" in
 		""|edge)
-			url=http://cdimage.ubuntu.com/ubuntu-core/${release}/dangerous-edge/pending/
+			url=http://cdimage.ubuntu.com/ubuntu-core/${release}/${dangerous}edge/pending/
 			;;
 		beta)
-			url=http://cdimage.ubuntu.com/ubuntu-core/${release}/dangerous-beta/current/
+			url=http://cdimage.ubuntu.com/ubuntu-core/${release}/${dangerous}beta/current/
 			;;
 		stable)
-			url=http://cdimage.ubuntu.com/ubuntu-core/${release}/stable/current/
+			url=http://cdimage.ubuntu.com/ubuntu-core/${release}/${dangerous}stable/current/
 			;;
 		*)
 			echo "-- Error: Invalid channel: ${channel}" >&2
@@ -120,10 +139,6 @@ function download_ubuntu_core()
 			;;
 	esac
 
-	raspi=raspi
-	if [ "${release}" = "18" ] ; then
-		raspi=raspi3
-	fi
 	remote_image=ubuntu-core-${release}-${arch}+${raspi}.img.xz
 
 	if [ -z "${outfile}" ] ; then
@@ -274,14 +289,8 @@ case "${distro}" in
 			"${distro}")
 				flavor=server
 				;;
-			desktop)
-				if [ "${arch}" != "arm64" ] ; then
-					echo "-- Error: Desktop images are only supported on"\
-						 "arm64" >&2
-					exit 1
-				fi
-				;;
-			server)
+			server|desktop)
+				true
 				;;
 			*)
 				trap - EXIT INT TERM HUP
@@ -293,14 +302,14 @@ case "${distro}" in
 		;;
 
 	# Ubuntu Core
-	core16|core18|core20)
+	core16|core18|core20|core22)
 		download_ubuntu_core "${distro#core}" "${arch}" "${channel}" "${outfile}"
 		;;
 
 	# Raspberry Pi OS
 	raspios|raspios-lite|raspios-desktop|raspios-full)
 		if [ "${distro}" = "raspios" ] ; then
-			flavor="lite"
+			flavor=lite
 		else
 			flavor=${distro#*-}
 		fi
