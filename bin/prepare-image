@@ -34,24 +34,26 @@ function umount_all()
 function usage()
 {
 	cat << EOF
-Usage: prepare-image [-d] [-h] IMAGE [INSTALLER]
+Usage: prepare-image [-d] [-h] [-i INSTALLER] IMAGE [OUTFILE]
 
 Prepare a Raspberry Pi image.
 
 Positional arguments:
-  IMAGE        The image to prepare.
-  INSTALLER    The installer tarball. If not provided, download and install
-               the installer tarball from github.
+  IMAGE                      Image file to prepare.
+  OUTFILE                    Prepared image file.
 
 Optional arguments:
-  -d, --debug  Enable debug mode.
-  -h, --help   Show this help text and exit.
+  -d, --debug                Enable debug mode.
+  -h, --help                 Show this help text and exit.
+  -i, --installer INSTALLER  Installer tarball. If not provided, download and
+                             install the installer tarball from github.
 EOF
 }
 
 debug=0
-image=
 installer=
+image=
+outfile=
 
 while [ "${#}" -gt 0 ] ; do
 	case "${1}" in
@@ -62,11 +64,15 @@ while [ "${#}" -gt 0 ] ; do
 			usage
 			exit
 			;;
+		-i|--installer)
+			shift
+			installer=${1}
+			;;
 		*)
 			if [ -z "${image}" ] ; then
 				image=${1}
-			elif [ -z "${installer}" ] ; then
-				installer=${1}
+			elif [ -z "${outfile}" ] ; then
+				outfile=${1}
 			else
 				echo "** Error: Invalid argument: ${1}" >&2
 				exit 2
@@ -91,8 +97,11 @@ if [ -n "${installer}" ] && ! [ -e "${installer}" ] ; then
 	exit 1
 fi
 
-outfile=${image##*/}
-outfile=${outfile%.img*}+prep.img
+outfile=${outfile%.gz}
+if [ -z "${outfile}" ] ; then
+	outfile=${image##*/}
+	outfile=${outfile%.img*}+prep.img
+fi
 
 case "${image}" in
 	*.img.xz)
