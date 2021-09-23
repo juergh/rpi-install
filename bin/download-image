@@ -20,8 +20,13 @@ function download_image()
 
 	# Check if the remote file exists
 	if ! curl --fail --head "${image_url}" >/dev/null 2>&1 ; then
-		echo "-- Error: Remote file not found" >&2
+		echo "-- Error: Remote image not found" >&2
 		return 1
+	fi
+
+	if [ "${DRY_RUN}" -eq 1 ] ; then
+		echo "-- Skipping image download (dry run)"
+		return
 	fi
 
 	# Download the image
@@ -140,7 +145,7 @@ function download_raspios()
 function usage()
 {
 	cat <<EOF
-Usage: download-image [-h] [-c CHANNEL] DISTRO ARCH
+Usage: download-image [-c CHANNEL] [-d] [-h] DISTRO ARCH
 
 Download a Raspberry Pi image.
 
@@ -153,6 +158,8 @@ Optional arguments:
   -c, --channel CHANNEL    Download the image from channel CHANNEL. See below
                            for the list of available channels. If not provided,
                            defaults to the first channel of the list.
+  -d, --dry-run            Check if the remote image exists but don't download
+                           it.
 
 Image distros:
   Ubuntu Classic:          xenial, bionic, focal, ...
@@ -170,12 +177,17 @@ Image channels:
 EOF
 }
 
+DRY_RUN=0
+
 channel=
 distro=
 arch=
 
 while [ $# -gt 0 ] ; do
 	case "${1}" in
+		-d|--dry-run)
+			DRY_RUN=1
+			;;
 		-h|--help)
 			usage
 			exit
