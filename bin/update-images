@@ -16,7 +16,7 @@ function update_distro()
 			dist_tmpl="\${release}-\${flavor}"
 			;;
 		core)
-			releases=("16" "18" "20")
+			releases=("16" "18" "20" "22")
 			flavors=("")
 			image_tmpl="core-\${release}-\${arch}+raspi.img.xz"
 			dist_tmpl="core\${release}"
