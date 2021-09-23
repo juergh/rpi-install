@@ -96,28 +96,31 @@ while true ; do
 
 -- Select an image to install on ${boot_dev}
 
-      1) Impish  - arm64
-      2) Impish  - armhf
-      3) Hirsute - arm64
-      4) Hirsute - armhf
-      5) Focal   - arm64
-      6) Focal   - armhf
-      7) Bionic  - arm64
-      8) Bionic  - armhf
+      0) Impish  - Server - arm64
+      1) Impish  - Server - armhf
+      2) Hirsute - Server - arm64
+      3) Hirsute - Server - armhf
+      4) Focal   - Server - arm64
+      5) Focal   - Server - armhf
+      6) Bionic  - Server - arm64
+      7) Bionic  - Server - armhf
 
-     10) Core20 - arm64
-     11) Core20 - armhf
-     12) Core18 - arm64
-     13) Core18 - armhf
-     14) Core16 - arm64
-     15) Core16 - armhf
+     10) Impish  - Desktop - arm64
+     11) Hirsute - Desktop - arm64
 
-     20) Raspberry Pi OS Lite    - arm64
-     21) Raspberry Pi OS Lite    - armhf
-     22) Raspberry Pi OS Full    - arm64
-     23) Raspberry Pi OS Full    - armhf
-     24) Raspberry Pi OS Desktop - arm64
-     25) Raspberry Pi OS Desktop - armhf
+     20) Core22 - arm64
+     21) Core22 - armhf
+     22) Core20 - arm64
+     23) Core20 - armhf
+     24) Core18 - armhf
+     25) Core16 - armhf
+
+     30) Raspberry Pi OS - Lite    - arm64
+     31) Raspberry Pi OS - Lite    - armhf
+     32) Raspberry Pi OS - Desktop - arm64
+     33) Raspberry Pi OS - Desktop - armhf
+     34) Raspberry Pi OS - Full    - arm64
+     35) Raspberry Pi OS - Full    - armhf
 
      90) Run a shell
      91) Enter an image name manually
@@ -135,34 +138,40 @@ __EOF__
 		#
 		# Ubuntu Server
 		#
-		1) image=ubuntu-impish-arm64  ;;
-		2) image=ubuntu-impish-armhf  ;;
-		3) image=ubuntu-hirsute-arm64 ;;
-		4) image=ubuntu-hirsute-armhf ;;
-		5) image=ubuntu-focal-arm64   ;;
-		6) image=ubuntu-focal-armhf   ;;
-		7) image=ubuntu-bionic-arm64  ;;
-		8) image=ubuntu-bionic-armhf  ;;
+		0) image=impish-server-arm64  ;;
+		1) image=impish-server-armhf  ;;
+		2) image=hirsute-server-arm64 ;;
+		3) image=hirsute-server-armhf ;;
+		4) image=focal-server-arm64   ;;
+		5) image=focal-server-armhf   ;;
+		6) image=bionic-server-arm64  ;;
+		7) image=bionic-server-armhf  ;;
+
+		#
+		# Ubuntu Desktop
+		#
+		10) image=impish-desktop-arm64  ;;
+		11) image=hirsute-desktop-arm64  ;;
 
 		#
 		# Ubuntu Core
 		#
-		10) image=ubuntu-core20-arm64 ;;
-		11) image=ubuntu-core20-armhf ;;
-		12) image=ubuntu-core18-arm64 ;;
-		13) image=ubuntu-core18-armhf ;;
-		14) image=ubuntu-core16-arm64 ;;
-		15) image=ubuntu-core16-armhf ;;
+		20) image=core-22-arm64 ;;
+		21) image=core-22-armhf ;;
+		22) image=core-20-arm64 ;;
+		23) image=core-20-armhf ;;
+		24) image=core-18-armhf ;;
+		25) image=core-16-armhf ;;
 
 		#
 		# Raspberry Pi OS
 		#
-		20) image=raspios-lite-arm64 ;;
-		21) image=raspios-lite-armhf ;;
-		22) image=raspios-full-arm64 ;;
-		23) image=raspios-full-armhf ;;
-		24) image=raspios-desktop-arm64 ;;
-		25) image=raspios-desktop-armhf ;;
+		30) image=raspios-lite-arm64 ;;
+		31) image=raspios-lite-armhf ;;
+		32) image=raspios-desktop-arm64 ;;
+		33) image=raspios-desktop-armhf ;;
+		34) image=raspios-full-arm64 ;;
+		35) image=raspios-full-armhf ;;
 
 		#
 		# Misc options
