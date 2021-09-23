@@ -1,0 +1,106 @@
+#!/bin/bash -eu
+#
+# Update and push Raspberry Pi images
+#
+
+function update_distro()
+{
+	local distro=${1}
+	local releases flavors image_tmpl release flavor arch image
+
+	case "${distro}" in
+		ubuntu)
+			releases=("bionic" "focal" "hirsute" "impish")
+			flavors=("server" "desktop")
+			image_tmpl="\${release}-\${flavor}-\${arch}+raspi.img.xz"
+			dist_tmpl="\${release}-\${flavor}"
+			;;
+		core)
+			releases=("16" "18" "20")
+			flavors=("")
+			image_tmpl="core-\${release}-\${arch}+raspi.img.xz"
+			dist_tmpl="core\${release}"
+			;;
+		raspios)
+			releases=("")
+			flavors=("lite" "full" "desktop")
+			image_tmpl="raspios-\${flavor}-\${arch}.img.zip"
+			dist_tmpl="raspios-\${flavor}"
+			;;
+		*)
+			echo "Error: Invalid distro: ${distro}" >&2
+			exit 1
+			;;
+	esac
+
+	for release in "${releases[@]}" ; do
+		for flavor in "${flavors[@]}" ; do
+			for arch in arm64 armhf ; do
+				export release flavor arch
+				image=$(echo "${image_tmpl}" | envsubst)
+				dist=$(echo "${dist_tmpl}" | envsubst)
+				image_prep=${image%.img.*}+prep.img.gz
+				image_link=${image%%.*}
+				image_link=${image_link%+raspi*}
+
+				if [ "${DRY_RUN}" -eq 1 ] ; then
+					if download-image -d "${dist}" "${arch}" >/dev/null 2>&1; then
+						echo "    FOUND: ${image} (${image_link})"
+					else
+						echo "NOT FOUND: ${image}"
+					fi
+					continue
+				fi
+
+				if download-image "${dist}" "${arch}" "${image}" ; then
+					prepare-image "${image}" "${image_prep}"
+					scp "${image_prep}" 192.168.99.11:/srv/images/"${distro}"/
+					ssh 192.168.99.11 ln -sf "${distro}"/"${image_prep}" \
+						/srv/images/"${image_link}"
+				fi
+			done
+		done
+	done
+}
+
+function usage()
+{
+	cat <<EOF
+Usage: $(basename "${0}") [-d] [-h] [DISTRO [DISTRO...]]
+
+Download, prepare and publish all Raspberry Pi images of the provided distro.
+If distro is not provided, defaults to: ubuntu, core, raspios.
+
+Optional arguments:
+  -d, --dry-run  Check if a remote image exists but don't download, prepare
+                 and publish it.
+  -h, --help     Show this help text and exit.
+EOF
+}
+
+here=$(dirname "$(readlink -f "${0}")")
+PATH=${here}:${PATH}
+
+DRY_RUN=0
+distros=("ubuntu" "core" "raspios")
+
+while [ ${#} -gt 0 ] ; do
+	case "${1}" in
+		-d|--dry-run)
+			DRY_RUN=1
+			;;
+		-h|--help)
+			usage
+			exit
+			;;
+		*)
+			distros=("${@}")
+			break
+			;;
+	esac
+	shift
+done
+
+for distro in "${distros[@]}" ; do
+	update_distro "${distro}"
+done
