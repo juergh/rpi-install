@@ -68,12 +68,16 @@ function install_packages()
 	fi
 	cp /etc/resolv.conf "${ROOT_DIR}"/etc/resolv.conf
 
+	echo "-- Update package index files"
+	chroot "${ROOT_DIR}" apt-get update
+
 	echo "-- Install package"
 	printf -- "--   %s\n" "${packages[@]}"
 
-	chroot "${ROOT_DIR}" apt-get update
 	chroot "${ROOT_DIR}" apt-get -y --no-install-recommends install \
 		   "${packages[@]}"
+
+	echo "-- Clean local package repository"
 	chroot "${ROOT_DIR}" apt-get -y clean
 }
 
@@ -267,13 +271,12 @@ function add_r8152_net_module()
 function usage()
 {
 	cat <<EOF
-Usage: configure-image [-h] [ROOT_DIR]
+Usage: configure-image [-h] ROOT_DIR
 
 Configure a Raspberry Pi system.
 
 Positional arguments:
-  ROOT_DIR    The root directory of the system to configure. If not provided,
-              configures the current system.
+  ROOT_DIR    The root directory of the system to configure.
 
 Optional arguments:
   -h, --help  Show this help text and exit.
@@ -300,6 +303,11 @@ while [ "${#}" -gt 0 ] ; do
 	esac
 	shift
 done
+
+if [ -z "${ROOT_DIR}" ] ; then
+	usage
+	exit 2
+fi
 
 trap out EXIT INT TERM HUP
 
