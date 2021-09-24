@@ -43,7 +43,7 @@ function download_ubuntu_classic()
 	path=ubuntu-server
 	if [ "${flavor}" = "desktop" ] ; then
 		if [ "${arch}" != "arm64" ] ; then
-			echo "-- Error: Desktop images are only supported on arm64" >&2
+			echo "-- Error: Ubuntu desktop is only supported on arm64" >&2
 			exit 1
 		fi
 		path=
@@ -111,7 +111,7 @@ function download_ubuntu_core()
 	case "${release}" in
 		16|18)
 			if [ "${arch}" != "armhf" ] ; then
-				echo "-- Error: Core16 and Core18 images are only supported on armhf" >&2
+				echo "-- Error: Ubuntu core${release} is only supported on armhf" >&2
 				exit 1
 			fi
 			dangerous=
