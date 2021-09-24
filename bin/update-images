@@ -59,8 +59,8 @@ function update_distro()
 					continue
 				fi
 
-				if download-image "${dist}" "${arch}" "${image}" ; then
-					prepare-image "${image}" "${image_prep}"
+				if download-image "${dist}" "${arch}" "${image}" && \
+				   prepare-image "${image}" "${image_prep}" ; then
 					scp "${image_prep}" 192.168.99.11:/srv/images/"${distro}"/
 					ssh 192.168.99.11 ln -sf "${distro}"/"${image_prep}" \
 						/srv/images/"${image_link}"
