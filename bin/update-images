@@ -5,8 +5,8 @@
 
 function update_distro()
 {
-	local distro=${1}
-	local releases flavors image_tmpl release flavor arch image
+	local distro=${1} release=${2} flavor=${3}
+	local releases flavors image_tmpl arch image
 
 	case "${distro}" in
 		ubuntu)
@@ -32,6 +32,13 @@ function update_distro()
 			exit 1
 			;;
 	esac
+
+	if [ -n "${release}" ] ; then
+		releases=("${release}")
+	fi
+	if [ -n "${flavor}" ] ; then
+		flavor=("${flavor}")
+	fi
 
 	for release in "${releases[@]}" ; do
 		for flavor in "${flavors[@]}" ; do
@@ -66,15 +73,23 @@ function update_distro()
 function usage()
 {
 	cat <<EOF
-Usage: $(basename "${0}") [-d] [-h] [DISTRO [DISTRO...]]
+Usage: $(basename "${0}") [-d] [-f FLAVOR] [-h] [-r RELEASE] [DISTRO [DISTRO...]]
 
-Download, prepare and publish all Raspberry Pi images of the provided distro.
-If distro is not provided, defaults to: ubuntu, core, raspios.
+Download, prepare and publish all Raspberry Pi images.
+
+Positional arguments:
+  DISTRO                 OS Distribution: ubuntu, core, raspios
 
 Optional arguments:
-  -d, --dry-run  Check if a remote image exists but don't download, prepare
-                 and publish it.
-  -h, --help     Show this help text and exit.
+  -d, --dry-run          Check if a remote image exists but don't download,
+                         prepare and publish it.
+  -f, --flavor FLAVOR    Distribution flavor:
+                           ubuntu: server, desktop
+                           raspio: lite, desktop, full
+  -h, --help             Show this help text and exit.
+  -r, --release RELEASE  Distribution release:
+                           ubuntu: bionic, focal, hirsute, ...
+                           core:   16, 18, 20, ...
 EOF
 }
 
@@ -82,6 +97,8 @@ here=$(dirname "$(readlink -f "${0}")")
 PATH=${here}:${PATH}
 
 DRY_RUN=0
+flavor=
+release=
 distros=("ubuntu" "core" "raspios")
 
 while [ ${#} -gt 0 ] ; do
@@ -89,9 +106,21 @@ while [ ${#} -gt 0 ] ; do
 		-d|--dry-run)
 			DRY_RUN=1
 			;;
+		-f|--flavor)
+			shift
+			flavor=${1}
+			;;
 		-h|--help)
 			usage
 			exit
+			;;
+		-r|--release)
+			shift
+			release=${1}
+			;;
+		-*)
+			echo "Error: Invalid argument: ${1}" >&2
+			exit 2
 			;;
 		*)
 			distros=("${@}")
@@ -102,5 +131,5 @@ while [ ${#} -gt 0 ] ; do
 done
 
 for distro in "${distros[@]}" ; do
-	update_distro "${distro}"
+	update_distro "${distro}" "${release}" "${flavor}"
 done
