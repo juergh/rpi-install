@@ -1,3 +1,17 @@
+v0.0.15
+  * update-images: Add -f, --flavor and -r, --release commandline arguments
+  * init: Catch image installation failures
+  * download-image: Clarify error messages
+  * init: Update the list of installable images
+  * update-image: Add Ubuntu Core22
+  * download-image: Misc fixes and enhancements
+  * update-images: Initial commit
+  * download-image: Add optional OUTFILE commandline argument
+  * prepare-image: Add optional OUTFILE commandline argument
+  * download-image: Fix/update raspios image downloads
+  * download-image: Add -d, --dry-run commandline argument
+  * download-image: Replace series with distro
+  * download-image: Replace release with channel
 v0.0.14
   * download-image: Simplify and extend the image download
   * init: Detect and use /dev/sda as a boot/installation device
