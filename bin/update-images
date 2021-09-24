@@ -37,7 +37,7 @@ function update_distro()
 		releases=("${release}")
 	fi
 	if [ -n "${flavor}" ] ; then
-		flavor=("${flavor}")
+		flavors=("${flavor}")
 	fi
 
 	for release in "${releases[@]}" ; do
