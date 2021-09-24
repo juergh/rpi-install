@@ -86,7 +86,18 @@ while true ; do
 	if [ -n "${image}" ] ; then
 		image_url="http://${BOTTLE_PI_HOST}/redfish/v1/Images/${image#/redfish/v1/Images/}"
 		echo "-- Install image ${image_url} on ${boot_dev}"
-		if /usr/bin/wget -O - "${image_url}" | /usr/bin/gzip -cd | /bin/dd of="${boot_dev}" bs=4k conv=fsync status=none; then
+		rm -f .fail
+		{
+			/usr/bin/wget -O - "${image_url}" || touch .fail
+		} | {
+			/usr/bin/gzip -cd || touch .fail
+		} | {
+			/bin/dd of="${boot_dev}" bs=4k conv=fsync status=none || touch .fail
+		}
+		if [ -e .fail ] ; then
+			echo "-- Failed to install image"
+		else
+			echo "-- Installed image, rebooting..."
 			sync
 			reboot -f
 		fi
