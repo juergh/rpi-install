@@ -1,3 +1,9 @@
+v0.0.16
+  * rpi-hostname: Add support for Pi Zero 2
+  * firmware: Add DTB for Pi Zero 2
+  * update-images: Continue if prepare-image fails
+  * configure-image: Make ROOT_DIR a mandatory argument
+  * update-images: Fix typo
 v0.0.15
   * update-images: Add -f, --flavor and -r, --release commandline arguments
   * init: Catch image installation failures
