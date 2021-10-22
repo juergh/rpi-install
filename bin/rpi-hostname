@@ -10,6 +10,7 @@ function get_hostname()
 	model=${model,,}
 	model=${model#raspberry pi }
 	model=${model/compute module /cm}
+	model=${model/zero /zero}
 	model=${model/ model /}
 	model=${model/ rev / rev}
 	model=${model// /-}
