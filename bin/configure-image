@@ -233,14 +233,14 @@ function enable_wifi()
 
 	if [ -d "${ROOT_DIR}"/etc/netplan ] ; then
 		cat << EOF > "${ROOT_DIR}"/etc/netplan/99-rpi-install.yaml
-#network:
-#    wifis:
-#        wlan0:
-#            dhcp4: true
-#            optional: true
-#            access-points:
-#                "${wifi_ssid}":
-#                    password: "${wifi_passphrase}"
+network:
+    wifis:
+        wlan0:
+            dhcp4: true
+            optional: true
+            access-points:
+                "${wifi_ssid}":
+                    password: "${wifi_passphrase}"
 EOF
 	else
 		cat << EOF > "${ROOT_DIR}"/etc/wpa_supplicant/wpa_supplicant.conf
@@ -334,7 +334,7 @@ set_hostname
 set_cmdline "console=tty1" "console=serial0,115200 ignore_loglevel"
 add_user "ubuntu"
 set_service "enable" "ssh"
-enable_wifi
+# enable_wifi
 add_r8152_net_module
 
 # HACK: Disable persistent net names
