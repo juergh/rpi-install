@@ -1,0 +1,21 @@
+#!/bin/bash -eu
+#
+# Backup the current (known good) kernel, initrd, DTB and DTB overlays
+#
+
+if [ -d boot/firmware ] ; then
+	boot_dir=/boot/firmware
+else
+	boot_dir=/boot
+fi
+
+files=(
+	"${boot_dir}"/kernel*
+	"${boot_dir}"/vmlinuz
+	"${boot_dir}"/initrd.img
+	"${boot_dir}"/*.dtb
+	"${boot_dir}"/overlays
+)
+
+echo "-- Backup kernel, initrd, DTBs and DTB overlays"
+rsync -av "${files[@]}" "${boot_dir}"/backup/
