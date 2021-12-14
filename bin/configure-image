@@ -139,6 +139,10 @@ function set_cmdline()
 			"${ROOT_DIR}"/etc/sysctl.d/*.conf
 	fi
 
+	# earlycon is different for Pi 4 :-(
+	# Pi 4:   earlycon=uart8250,mmio32,0xfe215040
+	# Pi 3/2: earlycon=uart8250,mmio32,0x3f215040
+
 	# Update config.txt
 	cat << EOF >> "${BOOT_DIR}"/config.txt
 
