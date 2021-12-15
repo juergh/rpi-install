@@ -1,3 +1,11 @@
+v0.0.17
+  * firmware: Update to latest Focal armhf
+  * import-firmware,init: Add support for installing xz images
+  * download-image: Don't use dangerous images
+  * configure-image: Add a note regarding earlycon
+  * rpi-backup: Initial commit
+  * configure-image: Add r8152 module to /etc/netplan/*.yaml
+  * configure-image: Completely disable enable_wifi
 v0.0.16
   * rpi-hostname: Add support for Pi Zero 2
   * firmware: Add DTB for Pi Zero 2
