@@ -118,7 +118,8 @@ function download_ubuntu_core()
 			raspi=raspi3
 			;;
 		*)
-			dangerous=dangerous-
+#			dangerous=dangerous-
+			dangerous=
 			raspi=raspi
 			;;
 	esac
