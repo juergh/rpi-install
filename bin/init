@@ -5,6 +5,21 @@
 
 BOTTLE_PI_HOST=192.168.99.11:5000
 
+install_image()
+{
+	rm -f .fail
+	{
+		/usr/bin/wget -O - "${1}" || touch .fail
+	} | {
+		/usr/bin/"${2}" -cd || touch .fail
+	} | {
+		/bin/dd of="${3}" bs=4k conv=fsync status=none || touch .fail
+	}
+	if [ -e .fail ] ; then
+		return 1
+	fi
+}
+
 echo "-- Run installer"
 
 /bin/busybox --install /bin
@@ -86,18 +101,16 @@ while true ; do
 	if [ -n "${image}" ] ; then
 		image_url="http://${BOTTLE_PI_HOST}/redfish/v1/Images/${image#/redfish/v1/Images/}"
 		echo "-- Install image ${image_url} on ${boot_dev}"
-		rm -f .fail
-		{
-			/usr/bin/wget -O - "${image_url}" || touch .fail
-		} | {
-			/usr/bin/gzip -cd || touch .fail
-		} | {
-			/bin/dd of="${boot_dev}" bs=4k conv=fsync status=none || touch .fail
-		}
-		if [ -e .fail ] ; then
+		fail=0
+		if ! install_image "${image_url}" gzip "${boot_dev}" ; then
+			if ! install_image "${image_url}" xz "${boot_dev}" ; then
+				fail=1
+			fi
+		fi
+		if [ ${fail} -eq 1 ] ; then
 			echo "-- Failed to install image"
 		else
-			echo "-- Installed image, rebooting..."
+			echo "-- Image installed, rebooting..."
 			sync
 			reboot -f
 		fi

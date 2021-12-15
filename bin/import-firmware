@@ -137,6 +137,7 @@ bins=(
 	/bin/busybox
 	/usr/bin/gzip
 	/usr/bin/wget
+	/usr/bin/xz
 	/usr/sbin/badblocks
 	/usr/sbin/e2fsck
 	/usr/sbin/e2label
