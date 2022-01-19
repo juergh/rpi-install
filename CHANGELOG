@@ -1,3 +1,6 @@
+v0.0.19
+  * firmware: Include bootloader files
+  * import-firmware: Import bootloader files
 v0.0.18
   * Drop hirsute, add jammy
   * update-images: Print upload info
