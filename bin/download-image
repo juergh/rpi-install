@@ -218,7 +218,7 @@ Optional arguments:
 
 Image distros:
   Ubuntu Classic:          xenial, bionic, focal, ...
-  Ubuntu Desktop:          groovy-desktop, hirsute-desktop, ...
+  Ubuntu Desktop:          impish-desktop, jammy-desktop, ...
   Ubuntu Core:             core16, core18, core20, ...
   Raspberry Pi OS Lite:    raspios
   Raspberry Pi OS Desktop: raspios-desktop
@@ -283,8 +283,8 @@ trap out EXIT INT TERM HUP
 case "${distro}" in
 
 	# Ubuntu Classic
-	bionic|focal|hirsute|impish|\
-	bionic-*|focal-*|hirsute-*|impish-*)
+	bionic|focal|impish|jammy|\
+	bionic-*|focal-*|impish-*|jammy-*)
 		flavor=${distro#*-}
 		case "${flavor}" in
 			"${distro}")

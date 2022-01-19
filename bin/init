@@ -120,17 +120,17 @@ while true ; do
 
 -- Select an image to install on ${boot_dev}
 
-      0) Impish  - Server - arm64
-      1) Impish  - Server - armhf
-      2) Hirsute - Server - arm64
-      3) Hirsute - Server - armhf
+      0) Jammy   - Server - arm64
+      1) Jammy   - Server - armhf
+      2) Impish  - Server - arm64
+      3) Impish  - Server - armhf
       4) Focal   - Server - arm64
       5) Focal   - Server - armhf
       6) Bionic  - Server - arm64
       7) Bionic  - Server - armhf
 
-     10) Impish  - Desktop - arm64
-     11) Hirsute - Desktop - arm64
+     10) Jammy   - Desktop - arm64
+     11) Impish  - Desktop - arm64
 
      20) Core22 - arm64
      21) Core22 - armhf
@@ -162,10 +162,10 @@ __EOF__
 		#
 		# Ubuntu Server
 		#
-		0) image=impish-server-arm64  ;;
-		1) image=impish-server-armhf  ;;
-		2) image=hirsute-server-arm64 ;;
-		3) image=hirsute-server-armhf ;;
+		0) image=jammy-server-arm64  ;;
+		1) image=jammy-server-armhf  ;;
+		2) image=impish-server-arm64  ;;
+		3) image=impish-server-armhf  ;;
 		4) image=focal-server-arm64   ;;
 		5) image=focal-server-armhf   ;;
 		6) image=bionic-server-arm64  ;;
@@ -174,8 +174,8 @@ __EOF__
 		#
 		# Ubuntu Desktop
 		#
-		10) image=impish-desktop-arm64  ;;
-		11) image=hirsute-desktop-arm64  ;;
+		10) image=jammy-desktop-arm64  ;;
+		11) image=impish-desktop-arm64  ;;
 
 		#
 		# Ubuntu Core

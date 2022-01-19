@@ -10,7 +10,7 @@ function update_distro()
 
 	case "${distro}" in
 		ubuntu)
-			releases=("bionic" "focal" "hirsute" "impish")
+			releases=("bionic" "focal" "impish" "jammy")
 			flavors=("server" "desktop")
 			image_tmpl="\${release}-\${flavor}-\${arch}+raspi.img.xz"
 			dist_tmpl="\${release}-\${flavor}"
@@ -89,7 +89,7 @@ Optional arguments:
                            raspio: lite, desktop, full
   -h, --help             Show this help text and exit.
   -r, --release RELEASE  Distribution release:
-                           ubuntu: bionic, focal, hirsute, ...
+                           ubuntu: bionic, focal, jammy, ...
                            core:   16, 18, 20, ...
 EOF
 }
