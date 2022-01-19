@@ -1,3 +1,6 @@
+v0.0.18
+  * Drop hirsute, add jammy
+  * update-images: Print upload info
 v0.0.17
   * firmware: Update to latest Focal armhf
   * import-firmware,init: Add support for installing xz images
