@@ -110,7 +110,7 @@ function download_ubuntu_core()
 
 	case "${release}" in
 		16|18)
-			if [ "${arch}" != "armhf" ] ; then
+			if [ "${release}" = "16" ] && [ "${arch}" != "armhf" ] ; then
 				echo "-- Error: Ubuntu core${release} is only supported on armhf" >&2
 				exit 1
 			fi
