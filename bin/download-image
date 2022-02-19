@@ -106,7 +106,7 @@ function download_ubuntu_classic()
 function download_ubuntu_core()
 {
 	local release=${1} arch=${2} channel=${3} outfile=${4}
-	local dangerous url raspi remote_image
+	local url raspi remote_image
 
 	case "${release}" in
 		16|18)
@@ -114,25 +114,20 @@ function download_ubuntu_core()
 				echo "-- Error: Ubuntu core${release} is only supported on armhf" >&2
 				exit 1
 			fi
-			dangerous=
 			raspi=raspi3
 			;;
 		*)
-#			dangerous=dangerous-
-			dangerous=
 			raspi=raspi
 			;;
 	esac
 
 	case "${channel}" in
-		""|edge)
-			url=http://cdimage.ubuntu.com/ubuntu-core/${release}/${dangerous}edge/pending/
+		"")
+			channel=edge
 			;;
-		beta)
-			url=http://cdimage.ubuntu.com/ubuntu-core/${release}/${dangerous}beta/current/
+		edge|beta|candidate|stable)
 			;;
-		stable)
-			url=http://cdimage.ubuntu.com/ubuntu-core/${release}/${dangerous}stable/current/
+		dangerous-edge|dangerous-beta|dangerous-candidate|dangerous-stable)
 			;;
 		*)
 			echo "-- Error: Invalid channel: ${channel}" >&2
@@ -146,8 +141,11 @@ function download_ubuntu_core()
 		outfile=core-${release}-${arch}+raspi.img.xz
 	fi
 
-	# Donwload the image
-	download_image "${url}/${remote_image}" "${outfile}"
+	# Download the image
+	url=http://cdimage.ubuntu.com/ubuntu-core/${release}/${channel}
+	if ! download_image "${url}"/current/"${remote_image}" "${outfile}" ; then
+		download_image "${url}"/pending/"${remote_image}" "${outfile}"
+	fi
 }
 
 function download_raspios()
@@ -227,7 +225,8 @@ Image distros:
 Image channels:
   Ubuntu Classic:          daily, release
   Ubuntu Desktop:          daily, release
-  Ubuntu Core:             edge, beta, stable
+  Ubuntu Core:             edge, beta, candidate, stable
+                           dangerous-edge, dangerous-beta, dangerous-candidate, dangerous-stable
   Raspberry Pi OS:         latest
 EOF
 }
