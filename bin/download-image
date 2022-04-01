@@ -97,6 +97,7 @@ function download_ubuntu_classic()
 				download_ubuntu_classic "${release}" "${flavor}" "${arch}" release "${outfile}"
 				;;
 			release)
+				# Nothing left to try
 				exit 1
 				;;
 		esac
@@ -106,7 +107,20 @@ function download_ubuntu_classic()
 function download_ubuntu_core()
 {
 	local release=${1} arch=${2} channel=${3} outfile=${4}
-	local url raspi remote_image
+	local url raspi remote_image next_channel
+
+	# Download order
+	declare -A channel_order=(
+		["edge"]="beta"
+		["beta"]="candidate"
+		["candidate"]="stable"
+		["stable"]="dangerous-edge"
+
+		["dangerous-edge"]="dangerous-beta"
+		["dangerous-beta"]="dangerous-candidate"
+		["dangerous-candidate"]="dangerous-stable"
+		["dangerous-stable"]="-1"
+	)
 
 	case "${release}" in
 		16|18)
@@ -121,19 +135,11 @@ function download_ubuntu_core()
 			;;
 	esac
 
-	case "${channel}" in
-		"")
-			channel=edge
-			;;
-		edge|beta|candidate|stable)
-			;;
-		dangerous-edge|dangerous-beta|dangerous-candidate|dangerous-stable)
-			;;
-		*)
-			echo "-- Error: Invalid channel: ${channel}" >&2
-			exit 1
-			;;
-	esac
+	channel=${channel:-edge}
+	if [ -z "${channel_order[${channel}]:-}" ] ; then
+		echo "-- Error: Invalid channel: ${channel}" >&2
+		exit 1
+	fi
 
 	remote_image=ubuntu-core-${release}-${arch}+${raspi}.img.xz
 
@@ -144,7 +150,14 @@ function download_ubuntu_core()
 	# Download the image
 	url=http://cdimage.ubuntu.com/ubuntu-core/${release}/${channel}
 	if ! download_image "${url}"/current/"${remote_image}" "${outfile}" ; then
-		download_image "${url}"/pending/"${remote_image}" "${outfile}"
+		if ! download_image "${url}"/pending/"${remote_image}" "${outfile}" ; then
+			next_channel=${channel_order[${channel}]}
+			if [ "${next_channel}" = "-1" ] ; then
+				# Nothing left to try
+				exit 1
+			fi
+			download_ubuntu_core "${release}" "${arch}" "${next_channel}" "${outfile}"
+		fi
 	fi
 }
 
