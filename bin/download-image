@@ -40,6 +40,13 @@ function download_ubuntu_classic()
 	local release=${1} flavor=${2} arch=${3} channel=${4} outfile=${5}
 	local path raspi url remote_image image_pattern href
 
+	# Download order
+	declare -A channel_order=(
+		["devel"]="daily"
+		["daily"]="release"
+		["release"]="-1"
+	)
+
 	path=ubuntu-server
 	if [ "${flavor}" = "desktop" ] ; then
 		if [ "${arch}" != "arm64" ] ; then
@@ -54,8 +61,9 @@ function download_ubuntu_classic()
 		raspi=raspi3
 	fi
 
+	channel=${channel:-devel}
 	case "${channel}" in
-		""|devel)
+		devel)
 			url=http://cdimage.ubuntu.com/${path}/daily-preinstalled/current/
 			remote_image=${release}-preinstalled-${flavor}-${arch}+${raspi}.img.xz
 			;;
@@ -89,18 +97,12 @@ function download_ubuntu_classic()
 
 	# Download the image
 	if ! download_image "${url}/${remote_image}" "${outfile}" ; then
-		case "${channel}" in
-			""|devel)
-				download_ubuntu_classic "${release}" "${flavor}" "${arch}" daily "${outfile}"
-				;;
-			daily)
-				download_ubuntu_classic "${release}" "${flavor}" "${arch}" release "${outfile}"
-				;;
-			release)
-				# Nothing left to try
-				exit 1
-				;;
-		esac
+		next_channel=${channel_order[${channel}]}
+		if [ "${next_channel}" = "-1" ] ; then
+			# Nothing left to try
+			exit 1
+		fi
+		download_ubuntu_classic "${release}" "${flavor}" "${arch}" "${next_channel}" "${outfile}"
 	fi
 }
 
