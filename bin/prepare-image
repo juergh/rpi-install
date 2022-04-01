@@ -180,6 +180,8 @@ sudo "${here}"/rpi-install --boot "${BOOT_DIR}" "${opts[@]}"
 # Configure the system
 if [ -n "${ROOT_DIR}" ] ; then
 	sudo "${here}"/configure-image "${ROOT_DIR}"
+else
+	sudo "${here}"/configure-image "${BOOT_DIR}"
 fi
 
 # Enter debug mode if requested

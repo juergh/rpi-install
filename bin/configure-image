@@ -133,16 +133,6 @@ function set_cmdline()
 	done
 	echo "${cmdline[*]} ${*}" > "${CMDLINE_TXT}"
 
-	# Remove kernel.printk sysctl
-	if [ "$(find "${ROOT_DIR}"/etc/sysctl.d/*.conf | wc -l)" -gt 0 ] ; then
-		sed -i 's/^kernel.printk/# rpi-install kernel.printk/' \
-			"${ROOT_DIR}"/etc/sysctl.d/*.conf
-	fi
-
-	# earlycon is different for Pi 4 :-(
-	# Pi 4:   earlycon=uart8250,mmio32,0xfe215040
-	# Pi 3/2: earlycon=uart8250,mmio32,0x3f215040
-
 	# Update config.txt
 	cat << EOF >> "${BOOT_DIR}"/config.txt
 
@@ -152,6 +142,20 @@ enable_uart=1
 uart_2ndstage=1
 # rpi-install CONFIG END
 EOF
+
+	if [ -z "${ROOT_DIR}" ] ; then
+		return
+	fi
+
+	# Remove kernel.printk sysctl
+	if [ "$(find "${ROOT_DIR}"/etc/sysctl.d/*.conf | wc -l)" -gt 0 ] ; then
+		sed -i 's/^kernel.printk/# rpi-install kernel.printk/' \
+			"${ROOT_DIR}"/etc/sysctl.d/*.conf
+	fi
+
+	# earlycon is different for Pi 4 :-(
+	# Pi 4:   earlycon=uart8250,mmio32,0xfe215040
+	# Pi 3/2: earlycon=uart8250,mmio32,0x3f215040
 
 	# Purge flash-kernel options
 	if [ -e "${ROOT_DIR}"/etc/default/flash-kernel ] ; then
@@ -278,12 +282,13 @@ function add_r8152_net_module()
 function usage()
 {
 	cat <<EOF
-Usage: configure-image [-h] ROOT_DIR
+Usage: configure-image [-h] ROOT_DIR|BOOT_DIR
 
 Configure a Raspberry Pi system.
 
 Positional arguments:
   ROOT_DIR    The root directory of the system to configure.
+  BOOT_DIR    The boot directory of the system to configure.
 
 Optional arguments:
   -h, --help  Show this help text and exit.
@@ -291,7 +296,8 @@ EOF
 }
 
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)
-ROOT_DIR=
+
+root_boot_dir=
 
 while [ "${#}" -gt 0 ] ; do
 	case "${1}" in
@@ -300,8 +306,8 @@ while [ "${#}" -gt 0 ] ; do
 			exit
 			;;
 		*)
-			if [ -z "${ROOT_DIR}" ] ; then
-				ROOT_DIR=${1}
+			if [ -z "${root_boot_dir}" ] ; then
+				root_boot_dir=${1}
 			else
 				echo "** Error: Invalid argument: ${1}" >&2
 				exit 2
@@ -311,20 +317,26 @@ while [ "${#}" -gt 0 ] ; do
 	shift
 done
 
-if [ -z "${ROOT_DIR}" ] ; then
+if [ -z "${root_boot_dir}" ] ; then
 	usage
 	exit 2
 fi
 
 trap out EXIT INT TERM HUP
 
-if [ -d "${ROOT_DIR}"/boot/firmware ] ; then
-	BOOT_DIR=${ROOT_DIR}/boot/firmware
-elif  [ -d "${ROOT_DIR}"/boot ] ; then
-	BOOT_DIR=${ROOT_DIR}/boot
+if [ -e "${root_boot_dir}"/config.txt ] ; then
+	BOOT_DIR=${root_boot_dir}
+	ROOT_DIR=
 else
-	echo "** Error: No such boot directory: ${ROOT_DIR}/boot{/firmware,}" >&2
-	exit 1
+	ROOT_DIR=${root_boot_dir}
+	if [ -e "${ROOT_DIR}"/boot/firmware/config.txt ] ; then
+		BOOT_DIR=${ROOT_DIR}/boot/firmware
+	elif  [ -e "${ROOT_DIR}"/boot/config.txt ] ; then
+		BOOT_DIR=${ROOT_DIR}/boot
+	else
+		echo "** Error: Boot directory not found" >&2
+		exit 1
+	fi
 fi
 
 if [ -e "${BOOT_DIR}"/nobtcmd.txt ] ; then
@@ -333,12 +345,17 @@ else
 	CMDLINE_TXT="${BOOT_DIR}"/cmdline.txt
 fi
 
+set_cmdline "console=tty1" "console=serial0,115200 ignore_loglevel"
+
+if [ -z "${ROOT_DIR}" ] ; then
+	exit
+fi
+
 remove_packages
 install_packages
 install_tools
 set_cloud_init_config
 set_hostname
-set_cmdline "console=tty1" "console=serial0,115200 ignore_loglevel"
 add_user "ubuntu"
 set_service "enable" "ssh"
 # enable_wifi
