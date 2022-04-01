@@ -85,12 +85,12 @@ Optional arguments:
   -d, --dry-run          Check if a remote image exists but don't download,
                          prepare and publish it.
   -f, --flavor FLAVOR    Distribution flavor:
-                           ubuntu: server, desktop
-                           raspio: lite, desktop, full
+                           ubuntu:  server, desktop
+                           raspios: lite, desktop, full
   -h, --help             Show this help text and exit.
   -r, --release RELEASE  Distribution release:
-                           ubuntu: bionic, focal, jammy, ...
-                           core:   16, 18, 20, ...
+                           ubuntu:  bionic, focal, jammy, ...
+                           core:    16, 18, 20, ...
 EOF
 }
 
