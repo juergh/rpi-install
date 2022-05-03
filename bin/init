@@ -120,17 +120,17 @@ while true ; do
 
 -- Select an image to install on ${boot_dev}
 
-      0) Jammy   - Server - arm64
-      1) Jammy   - Server - armhf
-      2) Impish  - Server - arm64
-      3) Impish  - Server - armhf
-      4) Focal   - Server - arm64
-      5) Focal   - Server - armhf
-      6) Bionic  - Server - arm64
-      7) Bionic  - Server - armhf
+      0) Jammy  - Server - arm64
+      1) Jammy  - Server - armhf
+      2) Impish - Server - arm64
+      3) Impish - Server - armhf
+      4) Focal  - Server - arm64
+      5) Focal  - Server - armhf
+      6) Bionic - Server - arm64
+      7) Bionic - Server - armhf
 
-     10) Jammy   - Desktop - arm64
-     11) Impish  - Desktop - arm64
+     10) Jammy  - Desktop - arm64
+     11) Impish - Desktop - arm64
 
      20) Core22 - arm64
      21) Core22 - armhf
