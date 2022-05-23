@@ -345,7 +345,8 @@ else
 	CMDLINE_TXT="${BOOT_DIR}"/cmdline.txt
 fi
 
-set_cmdline "console=tty1" "console=serial0,115200 ignore_loglevel"
+set_cmdline "console=tty1" "console=serial0,115200" "ignore_loglevel" \
+			"usb-storage.quirks=152d:0579:u"
 
 if [ -z "${ROOT_DIR}" ] ; then
 	exit

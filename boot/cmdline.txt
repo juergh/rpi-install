@@ -1,1 +1,1 @@
-console=serial0,115200 maxcpus=1
+console=serial0,115200 maxcpus=1 usb-storage.quirks=152d:0579:u
