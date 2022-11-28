@@ -124,7 +124,7 @@ ln -s usr/sbin firmware/sbin
 
 echo "-- Copy kernel and DTBs"
 
-for f in "${rootd}"/boot/firmware/{bcm*.dtb,vmlinuz,bootcode.bin,fixup*.dat,start*.elf} ; do
+for f in "${rootd}"/boot/firmware/{bcm*.dtb,bootcode.bin,fixup.dat,fixup4.dat,start.elf,start4.elf,vmlinuz} ; do
 	echo "--   ${f#${rootd}}"
 	cp  "${f}" firmware/boot/firmware/
 done
