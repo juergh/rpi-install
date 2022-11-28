@@ -1,3 +1,21 @@
+v0.0.20
+  * firmware: Update to latest Focal armhf
+  * import-firmare: Only import the default firmware and fixup blobs
+  * configure-image: Comment out 'PasswordAuthentication' in all config files
+  * Remove impish, add kinetic
+  * Disable UAS for broken USB SSD
+  * init: Fix spacing
+  * update-images: Fix usage text
+  * download-image: Use channel_order associative array for Ubuntu classic
+  * download-image: Try more download locations for Ubuntu core images
+  * {configure,prepare}-image: Handle root-partition-less images
+  * init: Display the target device in the menu option
+  * Revert "rpi-hostname: Add the memory size to the hostname for Pi 4 devices"
+  * rpi-hostname: Add the memory size to the hostname for Pi 4 devices
+  * download-image: Make Ubuntu core image downloads more resilient
+  * download-image: Add support for Core18 arm64 images
+  * init: Add Core18 arm64 image
+  * rpi-install: Copy the Pi Zero 2 DTB to the boot partition
 v0.0.19
   * firmware: Include bootloader files
   * import-firmware: Import bootloader files
