@@ -44,6 +44,8 @@ Positional arguments:
 
 Optional arguments:
   -d, --debug                Enable debug mode.
+  -g, --grow SIZE            Grow the image and the root partition and
+                             filesystem by SIZE.
   -h, --help                 Show this help text and exit.
   -i, --installer INSTALLER  Installer tarball. If not provided, download and
                              install the installer tarball from github.
@@ -51,6 +53,7 @@ EOF
 }
 
 debug=0
+grow=
 installer=
 image=
 outfile=
@@ -59,6 +62,10 @@ while [ "${#}" -gt 0 ] ; do
 	case "${1}" in
 		-d|--debug)
 			debug=1
+			;;
+		-g|--grow)
+			shift
+			grow=${1#+}
 			;;
 		-h|--help)
 			usage
@@ -138,9 +145,23 @@ if [ "${num_parts}" -eq 1 ] ; then
 	BOOT_DIR=$(partmount -rw -s "${outfile}" 1)
 	echo "-- Boot partition mounted on ${BOOT_DIR}"
 
-elif  [ "${num_parts}" -eq 2 ] ; then
+elif [ "${num_parts}" -eq 2 ] ; then
+	# Resize the image
+	if [ -n "${grow}" ] ; then
+		echo "-- Resize image and partition ${num_parts}"
+		qemu-img resize "${outfile}" +"${grow}"
+		growpart "${outfile}" "${num_parts}"
+	fi
+
 	# Mount the root partition
 	ROOT_DIR=$(partmount -rw -s "${outfile}" 2)
+
+	# Grow the root filesystem
+	if [ -n "${grow}" ] ; then
+		echo "-- Resize filesystem"
+		loop_dev=$(awk '$2 == "'"${ROOT_DIR}"'" { print $1 }' /etc/mtab )
+		sudo resize2fs "${loop_dev}"
+	fi
 
 	# Figure out the boot directory
 	if [ -d "${ROOT_DIR}"/boot/firmware ] ; then
