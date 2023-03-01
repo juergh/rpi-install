@@ -39,7 +39,7 @@ function find_so()
 				break
 			fi
 		done
-	done < <(arm-linux-gnueabihf-readelf -d "${root}/${bin}" 2>/dev/null | \
+	done < <("${READELF}" -d "${root}/${bin}" 2>/dev/null | \
 				 grep ' Shared library: ' || true)
 }
 
@@ -58,6 +58,8 @@ Optional arguments:
   -h, --help  Show this help text and exit.
 EOF
 }
+
+READELF=arm-linux-gnueabihf-readelf
 
 image=
 
@@ -87,6 +89,11 @@ fi
 if ! [ -d firmware ] ; then
 	echo "** Error: No such directory: ./firmware" >&2
 	exit 2
+fi
+
+if [ -z "$(which "${READELF}")" ] ; then
+	echo "${READELF} not found"  >&2
+	exit 1
 fi
 
 MOUNTD=
@@ -125,7 +132,7 @@ ln -s usr/sbin firmware/sbin
 echo "-- Copy kernel and DTBs"
 
 for f in "${rootd}"/boot/firmware/{bcm*.dtb,bootcode.bin,fixup.dat,fixup4.dat,start.elf,start4.elf,vmlinuz} ; do
-	echo "--   ${f#${rootd}}"
+	echo "--   ${f#"${rootd}"}"
 	cp  "${f}" firmware/boot/firmware/
 done
 
