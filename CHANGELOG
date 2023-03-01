@@ -1,3 +1,9 @@
+v0.0.21
+  * firmware: Update to Focal 22.04.2 armhf
+  * import-firmware: Check that arm-linux-gnueabihf-readelf is installed
+  * Use git hash of HEAD as version
+  * download-image: Add support for Lunar
+  * prepare-image: Add --grow SIZE commandline argument
 v0.0.20
   * firmware: Update to latest Focal armhf
   * import-firmare: Only import the default firmware and fixup blobs
