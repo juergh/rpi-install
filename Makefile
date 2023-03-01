@@ -12,6 +12,8 @@ initrd: buildd/initrd.img
 buildd/initrdd:
 	rm -rf $@/
 	mkdir -p $@/
+	# Use the git hash as the version
+	git rev-parse HEAD > $@/version
 	# Copy the installer init
 	cp bin/init $@/
 	# Copy binaries and libraries
