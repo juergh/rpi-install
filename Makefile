@@ -38,6 +38,8 @@ buildd/install: buildd/initrd.img
 	touch $@/README
 	mkdir -p $@/overlays
 	touch $@/overlays/README
+	# Use the git hash as the version
+	git rev-parse HEAD > $@/version
 
 release/rpi-install.tgz: buildd/install
 	find $< | xargs touch -h -d $(DATE_EPOCH)
