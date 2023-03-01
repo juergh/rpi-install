@@ -1,3 +1,5 @@
+v0.0.22
+  * Use git hash of HEAD as version
 v0.0.21
   * firmware: Update to Focal 22.04.2 armhf
   * import-firmware: Check that arm-linux-gnueabihf-readelf is installed
