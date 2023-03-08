@@ -25,6 +25,9 @@ function umount_all()
 	fi
 
 	if [ -n "${ROOT_DIR}" ] ; then
+		for d in dev proc sys ; do
+			sudo umount "${ROOT_DIR}/${d}" || sudo umount -l "${ROOT_DIR}/${d}"
+		done
 		partumount -s "${ROOT_DIR}"
 		echo "-- Image partitions unmounted from ${ROOT_DIR}"
 		ROOT_DIR=
@@ -187,6 +190,12 @@ elif [ "${num_parts}" -eq 2 ] ; then
 else
 	echo "** Error: Unsupported number of partitions: ${num_parts}" >&2
 	exit 1
+fi
+
+if [ -n "${ROOT_DIR}" ] ; then
+	for d in dev proc sys ; do
+		sudo mount -o bind "/${d}" "${ROOT_DIR}/${d}"
+	done
 fi
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)
