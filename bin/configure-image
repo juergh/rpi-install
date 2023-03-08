@@ -29,8 +29,8 @@ function remove_packages()
 	local packages package
 
 	packages=()
-	for package in unattended-upgrades needrestart ; do
-		if dpkg -l "${package}" >/dev/null 2>&1 ; then
+	for package in unattended-upgrades needrestart "${@}"; do
+		if dpkg --root="${ROOT_DIR}" -l "${package}" >/dev/null 2>&1 ; then
 			packages+=("${package}")
 		fi
 	done
@@ -43,6 +43,7 @@ function remove_packages()
 	printf -- "--   %s\n" "${packages[@]}"
 
 	chroot "${ROOT_DIR}" apt-get -y purge "${packages[@]}"
+	chroot "${ROOT_DIR}" apt-get -y autoremove --purge
 }
 
 function install_packages()
@@ -356,13 +357,19 @@ if [ -z "${ROOT_DIR}" ] ; then
 	exit
 fi
 
-remove_packages
+remove_packages ubiquity oem-config
 install_packages
 install_tools
 set_cloud_init_config
 set_hostname
-add_user "ubuntu"
-set_service "enable" "ssh"
+add_user ubuntu
+set_service enable ssh
+
+# Set the default target in desktop images
+if [ -e "${ROOT_DIR}"/usr/share/doc/ubuntu-desktop/copyright ] ; then
+	set_service set-default graphical.target
+fi
+
 # enable_wifi
 add_r8152_net_module
 
