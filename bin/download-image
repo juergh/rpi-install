@@ -38,7 +38,7 @@ function download_image()
 function download_ubuntu_classic()
 {
 	local release=${1} flavor=${2} arch=${3} channel=${4} outfile=${5}
-	local path raspi url remote_image image_pattern href
+	local path raspi url remote_image
 
 	# Download order
 	declare -A channel_order=(
@@ -72,14 +72,10 @@ function download_ubuntu_classic()
 			remote_image=${release}-preinstalled-${flavor}-${arch}+${raspi}.img.xz
 			;;
 		release)
-			# Get the name of the latest release image
 			url=http://cdimage.ubuntu.com/releases/${release}/release/
-			image_pattern="ubuntu-.*?-preinstalled-${flavor}-${arch}\+${raspi}\.img\.xz"
-			href=$(curl -s "${url}" | \
-					   grep -oP 'href="'"${image_pattern}"'"' | \
-					   sort -uV | tail -1)
-			remote_image=${href#href=\"}
-			remote_image=${remote_image%\"}
+			# Get the name of the release image
+			remote_image=$(curl -s "${url}"/SHA256SUMS | \
+			               grep -oP "ubuntu-.*?-preinstalled-${flavor}-${arch}\+${raspi}\.img\.xz" || true)
 			if [ -z "${remote_image}" ] ; then
 				echo "-- Error: Unable to determine release image name" >&2
 				exit 1
