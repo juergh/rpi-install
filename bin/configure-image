@@ -177,7 +177,8 @@ function add_user()
 		echo "--   ${user}"
 		if ! grep -q "^${user}:" "${ROOT_DIR}"/etc/passwd  ; then
 			useradd --root "${ROOT_DIR}" --create-home --user-group \
-					--shell /bin/bash --password "$(openssl passwd -1 "${user}")" \
+					--groups sudo --shell /bin/bash \
+					--password "$(openssl passwd -1 "${user}")" \
 					"${user}"
 		fi
 
