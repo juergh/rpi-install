@@ -219,7 +219,7 @@ set_cloud_init_config
 # Configure desktop images
 if [ -e "${ROOT_DIR}"/usr/share/doc/ubuntu-desktop/copyright ] ; then
 	"${HERE}"/../conf.d/set-service set-default graphical.target
-	"${HERE}"/../conf.d/enable_auto_login ubuntu
+	"${HERE}"/../conf.d/enable-auto-login ubuntu
 fi
 
 # enable_wifi
