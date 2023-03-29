@@ -15,7 +15,7 @@ function out()
 
 pkgs=()
 for p in "${@}" ; do
-	if ! dpkg --root="${ROOT_DIR}" -l "${p}" >/dev/null 2>&1 ; then
+	if ! dpkg --root="${ROOT_DIR}" -l "${p}" 2>/dev/null | grep -q '^ii' ; then
 		pkgs+=("${p}")
 	fi
 done
