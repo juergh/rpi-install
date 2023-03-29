@@ -311,16 +311,16 @@ export BOOT_DIR ROOT_DIR
 
 remove_packages ubiquity oem-config
 install_packages
-"${HERE}"/conf.d/install-tools
+"${HERE}"/../conf.d/install-tools
 set_cloud_init_config
-"${HERE}"/conf.d/set-hostname
+"${HERE}"/../conf.d/set-hostname
 add_user ubuntu
-"${HERE}"/conf.d/set-service enable ssh
+"${HERE}"/../conf.d/set-service enable ssh
 
 # Configure desktop images
 if [ -e "${ROOT_DIR}"/usr/share/doc/ubuntu-desktop/copyright ] ; then
-	"${HERE}"/conf.d/set-service set-default graphical.target
-	"${HERE}"/conf.d/enable_auto_login ubuntu
+	"${HERE}"/../conf.d/set-service set-default graphical.target
+	"${HERE}"/../conf.d/enable_auto_login ubuntu
 fi
 
 # enable_wifi
