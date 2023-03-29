@@ -82,18 +82,6 @@ function install_packages()
 	chroot "${ROOT_DIR}" apt-get -y clean
 }
 
-function install_tools()
-{
-	local tools
-
-	readarray -t tools < <(cd "${HERE}" && ls -1 rpi-*)
-
-	echo "-- Install tools"
-	printf -- "--   %s\n" "${tools[@]}"
-
-	( cd "${HERE}" && cp "${tools[@]}" "${ROOT_DIR}"/usr/bin )
-}
-
 function set_cloud_init_config()
 {
 	if [ -e "${BOOT_DIR}"/user-data ] ; then
@@ -331,7 +319,7 @@ export BOOT_DIR ROOT_DIR
 
 remove_packages ubiquity oem-config
 install_packages
-install_tools
+"${HERE}"/conf.d/install-tools
 set_cloud_init_config
 set_hostname
 add_user ubuntu

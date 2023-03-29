@@ -1,0 +1,12 @@
+#!/bin/bash -eu
+#
+# Intall rpi-install tools
+#
+
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)
+
+echo "-- Install tools"
+for f in "${here}"/../bin/rpi-* ; do
+	echo "--   ${f##*/}"
+	cp "${f}" "${ROOT_DIR}"/usr/bin/
+done
