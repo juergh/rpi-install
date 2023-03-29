@@ -1,0 +1,19 @@
+#!/bin/bash -eu
+#
+# Enable desktop auto login
+#
+
+user=${1}
+
+conf="${ROOT_DIR}"/etc/gdm3/custom.conf
+
+if ! [ -e "${conf}" ] ; then
+	echo "-- No such file: ${conf}" >&2
+	exit 1
+fi
+
+echo "-- Enable automatic login for ${user}"
+sed -i \
+    -e 's/^\( *AutomaticLogin\)/# rpi-install \1/' \
+    -e "/^ *\[daemon\]/a AutomaticLoginEnable=True\nAutomaticLogin=${user}" \
+    "${conf}"

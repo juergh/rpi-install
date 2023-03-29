@@ -358,6 +358,8 @@ if [ -z "${ROOT_DIR}" ] ; then
 	exit
 fi
 
+export BOOT_DIR ROOT_DIR
+
 remove_packages ubiquity oem-config
 install_packages
 install_tools
@@ -366,9 +368,10 @@ set_hostname
 add_user ubuntu
 set_service enable ssh
 
-# Set the default target in desktop images
+# Configure desktop images
 if [ -e "${ROOT_DIR}"/usr/share/doc/ubuntu-desktop/copyright ] ; then
 	set_service set-default graphical.target
+	"${HERE}"/conf.d/enable_auto_login ubuntu
 fi
 
 # enable_wifi
