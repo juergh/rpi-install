@@ -99,14 +99,6 @@ EOF
 	fi
 }
 
-function set_hostname()
-{
-	echo "-- Set hostname"
-
-	cp "${HERE}"/../etc/rpi-hostname.service "${ROOT_DIR}"/etc/systemd/system/
-	systemctl --root="${ROOT_DIR}" enable rpi-hostname.service
-}
-
 function set_cmdline()
 {
 	local cmdline opts opt
@@ -321,7 +313,7 @@ remove_packages ubiquity oem-config
 install_packages
 "${HERE}"/conf.d/install-tools
 set_cloud_init_config
-set_hostname
+"${HERE}"/conf.d/set-hostname
 add_user ubuntu
 "${HERE}"/conf.d/set-service enable ssh
 

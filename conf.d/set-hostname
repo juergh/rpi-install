@@ -1,0 +1,11 @@
+#!/bin/bash -eu
+#
+# Install a service that sets the hostname
+#
+
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)
+
+echo "-- Set hostname"
+
+cp "${here}"/../etc/rpi-hostname.service "${ROOT_DIR}"/etc/systemd/system/
+systemctl --root="${ROOT_DIR}" enable rpi-hostname.service
