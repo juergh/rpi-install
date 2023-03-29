@@ -1,0 +1,21 @@
+#!/bin/bash -eu
+#
+# Remove packages
+#
+
+pkgs=()
+for p in "${@}"; do
+	if dpkg --root="${ROOT_DIR}" -l "${p}" >/dev/null 2>&1 ; then
+		pkgs+=("${p}")
+	fi
+done
+
+if [ ${#pkgs[@]} -eq 0 ] ; then
+	exit 0
+fi
+
+echo "-- Remove packages"
+printf -- "--   %s\n" "${pkgs[@]}"
+
+chroot "${ROOT_DIR}" apt-get -y purge "${pkgs[@]}"
+chroot "${ROOT_DIR}" apt-get -y autoremove --purge

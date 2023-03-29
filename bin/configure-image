@@ -16,28 +16,6 @@ function out()
 	exit "${rc}"
 }
 
-function remove_packages()
-{
-	local packages package
-
-	packages=()
-	for package in unattended-upgrades needrestart "${@}"; do
-		if dpkg --root="${ROOT_DIR}" -l "${package}" >/dev/null 2>&1 ; then
-			packages+=("${package}")
-		fi
-	done
-
-	if [ "${#packages[@]}" -eq 0 ] ; then
-		return
-	fi
-
-	echo "-- Remove package"
-	printf -- "--   %s\n" "${packages[@]}"
-
-	chroot "${ROOT_DIR}" apt-get -y purge "${packages[@]}"
-	chroot "${ROOT_DIR}" apt-get -y autoremove --purge
-}
-
 function set_cloud_init_config()
 {
 	if [ -e "${BOOT_DIR}"/user-data ] ; then
@@ -265,7 +243,7 @@ fi
 
 export BOOT_DIR ROOT_DIR
 
-remove_packages ubiquity oem-config
+"${HERE}"/../conf.d/remove-packages unattended-upgrades needrestart ubiquity oem-config
 "${HERE}"/../conf.d/install-packages openssh-server sudo
 "${HERE}"/../conf.d/install-tools
 set_cloud_init_config
