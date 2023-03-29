@@ -9,14 +9,6 @@ function out()
 
 	trap - EXIT INT TERM HUP
 
-	# Cleanup
-	if [ -e "${ROOT_DIR}"/etc/resolv.orig ] || \
-	   [ -h "${ROOT_DIR}"/etc/resolv.orig ] ; then
-		echo "-- Restore /etc/resolv.conf"
-		rm -f "${ROOT_DIR}"/etc/resolv.conf
-		mv "${ROOT_DIR}"/etc/resolv.orig "${ROOT_DIR}"/etc/resolv.conf
-	fi
-
 	if [ "${rc}" -ne 0 ] ; then
 		echo "** Error: Script failed" >&2
 	fi
@@ -44,42 +36,6 @@ function remove_packages()
 
 	chroot "${ROOT_DIR}" apt-get -y purge "${packages[@]}"
 	chroot "${ROOT_DIR}" apt-get -y autoremove --purge
-}
-
-function install_packages()
-{
-	local packages
-
-	packages=()
-	if ! [ -d "${ROOT_DIR}"/etc/ssh/sshd_config.d ] ; then
-		packages+=("openssh-server")
-	fi
-	if ! [ -d "${ROOT_DIR}"/etc/sudoers.d ] ; then
-		packages+=("sudo")
-	fi
-
-	if [ "${#packages[@]}" -eq 0 ] ; then
-		return
-	fi
-
-	if [ -e "${ROOT_DIR}"/etc/resolv.conf ] || \
-	   [ -h "${ROOT_DIR}"/etc/resolv.conf ] ; then
-		echo "-- Backup /etc/resolv.conf"
-		mv "${ROOT_DIR}"/etc/resolv.conf "${ROOT_DIR}"/etc/resolv.orig
-	fi
-	cp /etc/resolv.conf "${ROOT_DIR}"/etc/resolv.conf
-
-	echo "-- Update package index files"
-	chroot "${ROOT_DIR}" apt-get update
-
-	echo "-- Install package"
-	printf -- "--   %s\n" "${packages[@]}"
-
-	chroot "${ROOT_DIR}" apt-get -y --no-install-recommends install \
-		   "${packages[@]}"
-
-	echo "-- Clean local package repository"
-	chroot "${ROOT_DIR}" apt-get -y clean
 }
 
 function set_cloud_init_config()
@@ -310,7 +266,7 @@ fi
 export BOOT_DIR ROOT_DIR
 
 remove_packages ubiquity oem-config
-install_packages
+"${HERE}"/../conf.d/install-packages openssh-server sudo
 "${HERE}"/../conf.d/install-tools
 set_cloud_init_config
 "${HERE}"/../conf.d/set-hostname

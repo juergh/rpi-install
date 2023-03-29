@@ -1,0 +1,44 @@
+#!/bin/bash -eu
+#
+# Install packages
+#
+
+function out()
+{
+	if [ -e "${ROOT_DIR}"/etc/resolv.orig ] || \
+	   [ -h "${ROOT_DIR}"/etc/resolv.orig ] ; then
+		echo "-- Restore /etc/resolv.conf"
+		rm -f "${ROOT_DIR}"/etc/resolv.conf
+		mv "${ROOT_DIR}"/etc/resolv.orig "${ROOT_DIR}"/etc/resolv.conf
+	fi
+}
+
+pkgs=()
+for p in "${@}" ; do
+	if ! dpkg --root="${ROOT_DIR}" -l "${p}" >/dev/null 2>&1 ; then
+		pkgs+=("${p}")
+	fi
+done
+
+if [ ${#pkgs[@]} -eq 0 ] ; then
+	exit 0
+fi
+
+if [ -e "${ROOT_DIR}"/etc/resolv.conf ] || \
+   [ -h "${ROOT_DIR}"/etc/resolv.conf ] ; then
+	echo "-- Backup /etc/resolv.conf"
+	mv "${ROOT_DIR}"/etc/resolv.conf "${ROOT_DIR}"/etc/resolv.orig
+	trap out EXIT INT TERM HUP
+fi
+cp /etc/resolv.conf "${ROOT_DIR}"/etc/resolv.conf
+
+echo "-- Update package index files"
+chroot "${ROOT_DIR}" apt-get update
+
+echo "-- Install packages"
+printf -- "--   %s\n" "${pkgs[@]}"
+
+chroot "${ROOT_DIR}" apt-get -y --no-install-recommends install "${pkgs[@]}"
+
+echo "-- Clean local package repository"
+chroot "${ROOT_DIR}" apt-get -y clean
