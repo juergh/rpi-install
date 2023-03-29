@@ -202,37 +202,6 @@ EOF
 	done
 }
 
-function set_service()
-{
-	local action service
-
-	action=${1}
-	shift
-
-	echo "-- ${action^} service"
-
-	for service in "${@}" ; do
-		echo "--   ${service}"
-		systemctl --root="${ROOT_DIR}" "${action}" "${service}" || continue
-
-		# Enable pwauth for ssh
-		if [ "${action}" = "enable" ] && [ "${service}" = "ssh" ] ; then
-			echo "--     Enable password authentication"
-			for f in "${ROOT_DIR}"/etc/ssh/sshd_config "${ROOT_DIR}"/etc/ssh/sshd_config.d/* ; do
-				if [ -e "${f}" ] ; then
-					sed -i 's/^PasswordAuthentication/# rpi-install PasswordAuthentication/' \
-						"${f}"
-				fi
-			done
-			cat << EOF >> "${ROOT_DIR}"/etc/ssh/sshd_config
-
-# rpi-install
-PasswordAuthentication yes
-EOF
-		fi
-	done
-}
-
 function enable_wifi()
 {
 	local wifi_ssid wifi_passphrase
@@ -366,11 +335,11 @@ install_tools
 set_cloud_init_config
 set_hostname
 add_user ubuntu
-set_service enable ssh
+"${HERE}"/conf.d/set-service enable ssh
 
 # Configure desktop images
 if [ -e "${ROOT_DIR}"/usr/share/doc/ubuntu-desktop/copyright ] ; then
-	set_service set-default graphical.target
+	"${HERE}"/conf.d/set-service set-default graphical.target
 	"${HERE}"/conf.d/enable_auto_login ubuntu
 fi
 

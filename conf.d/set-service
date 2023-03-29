@@ -1,0 +1,29 @@
+#!/bin/bash -eu
+#
+# Set systemd service
+#
+
+action=${1}
+shift
+
+echo "-- ${action^} service"
+
+for service in "${@}" ; do
+	echo "--   ${service}"
+	systemctl --root="${ROOT_DIR}" "${action}" "${service}" || continue
+
+	# Enable pwauth for ssh
+	if [ "${action}" = "enable" ] && [ "${service}" = "ssh" ] ; then
+		echo "--     Enable password authentication"
+		for f in "${ROOT_DIR}"/etc/ssh/sshd_config "${ROOT_DIR}"/etc/ssh/sshd_config.d/* ; do
+			if [ -e "${f}" ] ; then
+				sed -i 's/^\( *PasswordAuthentication\)/# rpi-install \1/' "${f}"
+			fi
+		done
+		cat << EOF >> "${ROOT_DIR}"/etc/ssh/sshd_config
+
+# rpi-install
+PasswordAuthentication yes
+EOF
+	fi
+done
