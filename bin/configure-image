@@ -81,41 +81,6 @@ EOF
 	fi
 }
 
-function add_user()
-{
-	local user pubkey
-
-	echo "-- Add user"
-
-	for user in "${@}" ; do
-		echo "--   ${user}"
-		if ! grep -q "^${user}:" "${ROOT_DIR}"/etc/passwd  ; then
-			useradd --root "${ROOT_DIR}" --create-home --user-group \
-					--groups sudo --shell /bin/bash \
-					--password "$(openssl passwd -1 "${user}")" \
-					"${user}"
-		fi
-
-		# Add a sudoer file
-		cat << EOF > "${ROOT_DIR}"/etc/sudoers.d/"${user}"
-"${user}" ALL = NOPASSWD: ALL
-EOF
-		chmod 440 "${ROOT_DIR}"/etc/sudoers.d/"${user}"
-
-		# Copy the SSH public key
-		pubkey=${HERE}/../ssh/${user}.pubkey
-		if [ -e "${pubkey}" ] ; then
-			echo "--     Import public SSH key"
-			sshdir=${ROOT_DIR}/home/${user}/.ssh
-			# shellcheck disable=SC2174
-			mkdir -p -m 700 "${sshdir}"
-			cat "${pubkey}" >> "${sshdir}"/authorized_keys
-			chmod 600 "${sshdir}"/authorized_keys
-			chroot "${ROOT_DIR}" chown -R "${user}":"${user}" /home/"${user}"/.ssh
-		fi
-	done
-}
-
 function enable_wifi()
 {
 	local wifi_ssid wifi_passphrase
@@ -248,7 +213,7 @@ export BOOT_DIR ROOT_DIR
 "${HERE}"/../conf.d/install-tools
 set_cloud_init_config
 "${HERE}"/../conf.d/set-hostname
-add_user ubuntu
+"${HERE}"/../conf.d/add-user ubuntu
 "${HERE}"/../conf.d/set-service enable ssh
 
 # Configure desktop images
