@@ -1,0 +1,18 @@
+#!/bin/bash -eu
+#
+# Set cloud-init config
+#
+
+if [ -e "${BOOT_DIR}"/user-data ] ; then
+	echo "-- Clear cloud-init user-data"
+	# Purge cloud-init cruft
+	cat << EOF > "${BOOT_DIR}"/user-data
+#cloud-config
+EOF
+fi
+
+if [ -e "${ROOT_DIR}"/etc/cloud/cloud.cfg ] ; then
+	echo "-- Disable users-groups in cloud.cfg"
+	sed -i 's/^ - users-groups/# rpi-install - users-groups/' \
+	    "${ROOT_DIR}"/etc/cloud/cloud.cfg
+fi

@@ -16,23 +16,6 @@ function out()
 	exit "${rc}"
 }
 
-function set_cloud_init_config()
-{
-	if [ -e "${BOOT_DIR}"/user-data ] ; then
-		echo "-- Clear cloud-init user-data"
-		# Purge cloud-init cruft
-		cat << EOF > "${BOOT_DIR}"/user-data
-#cloud-config
-EOF
-	fi
-
-	if [ -e "${ROOT_DIR}"/etc/cloud/cloud.cfg ] ; then
-		echo "-- Disable users-groups in cloud.cfg"
-		sed -i 's/^ - users-groups/# rpi-install - users-groups/' \
-			"${ROOT_DIR}"/etc/cloud/cloud.cfg
-	fi
-}
-
 function set_cmdline()
 {
 	local cmdline opts opt
@@ -174,7 +157,7 @@ export BOOT_DIR ROOT_DIR
 "${HERE}"/../hooks/remove-packages unattended-upgrades needrestart ubiquity oem-config
 "${HERE}"/../hooks/install-packages openssh-server sudo
 "${HERE}"/../hooks/install-tools
-set_cloud_init_config
+"${HERE}"/../hooks/set-cloudinit-config
 "${HERE}"/../hooks/set-hostname
 "${HERE}"/../hooks/add-user ubuntu
 "${HERE}"/../hooks/set-service enable ssh
