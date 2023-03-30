@@ -81,43 +81,6 @@ EOF
 	fi
 }
 
-function enable_wifi()
-{
-	local wifi_ssid wifi_passphrase
-
-	echo "-- Enable wifi"
-
-	wifi_ssid=$(pass show local/wifi | grep '^ssid: ')
-	wifi_ssid=${wifi_ssid#* }
-
-	wifi_passphrase=$(pass show local/wifi | grep '^passphrase: ')
-	wifi_passphrase=${wifi_passphrase#* }
-
-	if [ -d "${ROOT_DIR}"/etc/netplan ] ; then
-		cat << EOF > "${ROOT_DIR}"/etc/netplan/99-rpi-install.yaml
-network:
-    wifis:
-        wlan0:
-            dhcp4: true
-            optional: true
-            access-points:
-                "${wifi_ssid}":
-                    password: "${wifi_passphrase}"
-EOF
-	else
-		cat << EOF > "${ROOT_DIR}"/etc/wpa_supplicant/wpa_supplicant.conf
-ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
-update_config=1
-country=CH
-
-network={
-    ssid="${wifi_ssid}"
-    psk="${wifi_passphrase}"
-}
-EOF
-	fi
-}
-
 function add_r8152_net_module()
 {
 	echo "-- Add r8152 network module"

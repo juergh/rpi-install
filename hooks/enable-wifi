@@ -1,0 +1,45 @@
+#!/bin/bash -eu
+#
+# Enable wifi
+#
+
+echo "-- Enable wifi"
+
+country_code=${COUNTRY_CODE:-CH}
+
+wifi_ssid=$(pass show local/wifi | grep '^ssid: ')
+wifi_ssid=${wifi_ssid#* }
+
+wifi_passphrase=$(pass show local/wifi | grep '^passphrase: ')
+wifi_passphrase=${wifi_passphrase#* }
+
+if [ -z "${wifi_ssid}" ] || [ -z "${wifi_passphrase}" ] ; then
+	echo "Failed to determine wifi SSID and/or passphrase" >&2
+	exit 1
+fi
+
+echo "--   ${wifi_ssid}"
+
+if [ -d "${ROOT_DIR}"/etc/netplan ] ; then
+	cat << EOF > "${ROOT_DIR}"/etc/netplan/99-rpi-install.yaml
+network:
+    wifis:
+        wlan0:
+            dhcp4: true
+            optional: true
+            access-points:
+                "${wifi_ssid}":
+                    password: "${wifi_passphrase}"
+EOF
+	else
+		cat << EOF > "${ROOT_DIR}"/etc/wpa_supplicant/wpa_supplicant.conf
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+country=${country_code}
+
+network={
+    ssid="${wifi_ssid}"
+    psk="${wifi_passphrase}"
+}
+EOF
+fi
