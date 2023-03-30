@@ -208,18 +208,18 @@ fi
 
 export BOOT_DIR ROOT_DIR
 
-"${HERE}"/../conf.d/remove-packages unattended-upgrades needrestart ubiquity oem-config
-"${HERE}"/../conf.d/install-packages openssh-server sudo
-"${HERE}"/../conf.d/install-tools
+"${HERE}"/../hooks/remove-packages unattended-upgrades needrestart ubiquity oem-config
+"${HERE}"/../hooks/install-packages openssh-server sudo
+"${HERE}"/../hooks/install-tools
 set_cloud_init_config
-"${HERE}"/../conf.d/set-hostname
-"${HERE}"/../conf.d/add-user ubuntu
-"${HERE}"/../conf.d/set-service enable ssh
+"${HERE}"/../hooks/set-hostname
+"${HERE}"/../hooks/add-user ubuntu
+"${HERE}"/../hooks/set-service enable ssh
 
 # Configure desktop images
 if [ -e "${ROOT_DIR}"/usr/share/doc/ubuntu-desktop/copyright ] ; then
-	"${HERE}"/../conf.d/set-service set-default graphical.target
-	"${HERE}"/../conf.d/enable-auto-login ubuntu
+	"${HERE}"/../hooks/set-service set-default graphical.target
+	"${HERE}"/../hooks/enable-auto-login ubuntu
 fi
 
 # enable_wifi
