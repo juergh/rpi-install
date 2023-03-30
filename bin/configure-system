@@ -19,7 +19,7 @@ function out()
 function usage()
 {
 	cat <<EOF
-Usage: configure-image [-h] ROOT_DIR|BOOT_DIR
+Usage: configure-system [-h] ROOT_DIR|BOOT_DIR
 
 Configure a Raspberry Pi system.
 
@@ -59,8 +59,6 @@ if [ -z "${root_boot_dir}" ] ; then
 	exit 2
 fi
 
-trap out EXIT INT TERM HUP
-
 if [ -e "${root_boot_dir}"/config.txt ] ; then
 	BOOT_DIR=${root_boot_dir}
 	ROOT_DIR=
@@ -81,6 +79,8 @@ if [ -e "${BOOT_DIR}"/nobtcmd.txt ] ; then
 else
 	CMDLINE_TXT="${BOOT_DIR}"/cmdline.txt
 fi
+
+trap out EXIT INT TERM HUP
 
 export BOOT_DIR ROOT_DIR CMDLINE_TXT
 
