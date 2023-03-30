@@ -64,21 +64,6 @@ EOF
 	fi
 }
 
-function add_r8152_net_module()
-{
-	echo "-- Add r8152 network module"
-
-	if [ -d "${ROOT_DIR}"/etc/netplan/ ] &&
-	   [ "$(find "${ROOT_DIR}"/etc/netplan/ -type f -name '*.yaml' | wc -l)" -gt 0 ] ; then
-		sed -i 's/lan78xx/lan78xx r8152/' "${ROOT_DIR}"/etc/netplan/*.yaml
-	fi
-
-	if [ -e "${BOOT_DIR}"/network-config ] ; then
-		# Add the r8152 module to the list of 'built-in' modules
-		sed -i 's/lan78xx/lan78xx r8152/' "${BOOT_DIR}"/network-config
-	fi
-}
-
 function usage()
 {
 	cat <<EOF
@@ -169,7 +154,7 @@ if [ -e "${ROOT_DIR}"/usr/share/doc/ubuntu-desktop/copyright ] ; then
 fi
 
 # enable_wifi
-add_r8152_net_module
+"${HERE}"/../hooks/add-net-module r8152
 
 # HACK: Disable persistent net names
 if ! grep -q 'net.ifnames=0' "${CMDLINE_TXT}" ; then

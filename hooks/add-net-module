@@ -1,0 +1,19 @@
+#!/bin/bash -eu
+#
+# Add a network module
+#
+
+module=${1}
+
+echo "-- Add network module: ${module}"
+
+for f in "${ROOT_DIR}"/etc/netplan/*.yaml ; do
+	if [ -e "${f}" ] ; then
+		sed -i "s/lan78xx/lan78xx ${module}/" "${f}"
+	fi
+done
+
+if [ -e "${BOOT_DIR}"/network-config ] ; then
+	# Add the module to the list of 'built-in' modules
+	sed -i "s/lan78xx/lan78xx ${module}/" "${BOOT_DIR}"/network-config
+fi
