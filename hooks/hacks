@@ -1,0 +1,9 @@
+#!/bin/bash -eu
+#
+# Temporary(?) hacks
+#
+
+if ! grep -q 'net.ifnames=0' "${CMDLINE_TXT}" ; then
+	echo "-- Disable persistent net names"
+	sed -i 's/^/net.ifnames=0 /' "${CMDLINE_TXT}"
+fi
