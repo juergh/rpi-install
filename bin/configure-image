@@ -16,54 +16,6 @@ function out()
 	exit "${rc}"
 }
 
-function set_cmdline()
-{
-	local cmdline opts opt
-	echo "-- Set cmdline (${*})"
-
-	cmdline=()
-	readarray -t opts < <(head -1 "${CMDLINE_TXT}" | tr ' ' '\n')
-	for opt in "${opts[@]}" ; do
-		case "${opt}" in
-			console=*|quiet|splash) ;;  # Drop the option
-			*) cmdline+=("${opt}") ;;   # Keep the option
-		esac
-	done
-	echo "${cmdline[*]} ${*}" > "${CMDLINE_TXT}"
-
-	# Update config.txt
-	cat << EOF >> "${BOOT_DIR}"/config.txt
-
-# rpi-install CONFIG BEGIN
-[all]
-enable_uart=1
-uart_2ndstage=1
-# rpi-install CONFIG END
-EOF
-
-	if [ -z "${ROOT_DIR}" ] ; then
-		return
-	fi
-
-	# Remove kernel.printk sysctl
-	if [ "$(find "${ROOT_DIR}"/etc/sysctl.d/*.conf | wc -l)" -gt 0 ] ; then
-		sed -i 's/^kernel.printk/# rpi-install kernel.printk/' \
-			"${ROOT_DIR}"/etc/sysctl.d/*.conf
-	fi
-
-	# earlycon is different for Pi 4 :-(
-	# Pi 4:   earlycon=uart8250,mmio32,0xfe215040
-	# Pi 3/2: earlycon=uart8250,mmio32,0x3f215040
-
-	# Purge flash-kernel options
-	if [ -e "${ROOT_DIR}"/etc/default/flash-kernel ] ; then
-		cat << EOF > "${ROOT_DIR}"/etc/default/flash-kernel
-LINUX_KERNEL_CMDLINE=
-LINUX_KERNEL_CMDLINE_DEFAULTS=
-EOF
-	fi
-}
-
 function usage()
 {
 	cat <<EOF
@@ -130,14 +82,15 @@ else
 	CMDLINE_TXT="${BOOT_DIR}"/cmdline.txt
 fi
 
-set_cmdline "console=tty1" "console=serial0,115200" "ignore_loglevel" \
-			"usb-storage.quirks=152d:0579:u"
+export BOOT_DIR ROOT_DIR CMDLINE_TXT
+
+"${HERE}"/../hooks/set-cmdline "console=tty1" "console=serial0,115200" \
+                               "ignore_loglevel" \
+                               "usb-storage.quirks=152d:0579:u"
 
 if [ -z "${ROOT_DIR}" ] ; then
 	exit
 fi
-
-export BOOT_DIR ROOT_DIR
 
 "${HERE}"/../hooks/remove-packages unattended-upgrades needrestart ubiquity oem-config
 "${HERE}"/../hooks/install-packages openssh-server sudo
