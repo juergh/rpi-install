@@ -188,7 +188,7 @@ function download_raspios()
 	# Get the name of the latest image
 	url=https://downloads.raspberrypi.org/${image_type}/images/${image_dir}
 	href=$(curl -s "${url}" | \
-			   grep -oP 'href="'".*?\.zip"'"' | \
+			   grep -oP 'href="'".*?\.img\.xz"'"' | \
 			   sort -uV | tail -1)
 	remote_image=${href#href=\"}
 	remote_image=${remote_image%\"}
@@ -198,7 +198,7 @@ function download_raspios()
 	fi
 
 	if [ -z "${outfile}" ] ; then
-		outfile=raspios-${flavor}-${arch}.img.zip
+		outfile=raspios-${flavor}-${arch}.img.xz
 	fi
 
 	# Download the image
