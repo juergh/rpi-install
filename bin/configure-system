@@ -16,35 +16,116 @@ function out()
 	exit "${rc}"
 }
 
+function print_var()
+{
+	local var=${1}
+
+	printf "%-12s: %s\n" "${var}" "${!var}"
+}
+
+function set_boot_root_dir
+{
+	local system_dir=${1}
+
+	BOOT_DIR=
+	ROOT_DIR=
+
+	if [ -e "${system_dir}"/config.txt ] ; then
+		BOOT_DIR=${system_dir}
+		return
+	fi
+
+	ROOT_DIR=${system_dir}
+	if [ -e "${ROOT_DIR}"/boot/firmware/config.txt ] ; then
+		BOOT_DIR=${ROOT_DIR}/boot/firmware
+	elif  [ -e "${ROOT_DIR}"/boot/config.txt ] ; then
+		BOOT_DIR=${ROOT_DIR}/boot
+	fi
+}
+
+function set_system_id_type
+{
+	SYSTEM_ID=
+	SYSTEM_TYPE=
+
+	if [ -z "${ROOT_DIR}" ] ; then
+		# If there's no root directory, assume it's Ubuntu Core
+		SYSTEM_ID=core
+		return
+	fi
+
+	if [ -e "${ROOT_DIR}"/etc/os-release ] ; then
+		SYSTEM_ID=$(sed -n 's/^ID=//p' "${ROOT_DIR}"/etc/os-release)
+	elif [ -e "${ROOT_DIR}"/etc/lsb-release ] ; then
+		SYSTEM_ID=$(sed -n 's/^DISTRIB_ID=//p' "${ROOT_DIR}"/etc/lsb-release)
+	fi
+
+	SYSTEM_ID=${SYSTEM_ID,,}
+}
+
+function set_cmdline_txt
+{
+	local f
+
+	CMDLINE_TXT=
+
+	for f in nobtcmd.txt cmdline.txt ; do
+		f=${BOOT_DIR}/${f}
+		if [ -e "${f}" ] ; then
+			CMDLINE_TXT=${f}
+			return
+		fi
+	done
+}
+
+function set_config_txt
+{
+	local f
+
+	CONFIG_TXT=
+
+	for f in extraconfig.txt config.txt ; do
+		f=${BOOT_DIR}/${f}
+		if [ -e "${f}" ] ; then
+			CONFIG_TXT=${f}
+			return
+		fi
+	done
+}
+
 function usage()
 {
 	cat <<EOF
-Usage: configure-system [-h] ROOT_DIR|BOOT_DIR
+Usage: configure-system [-d] [-h] SYSTEM_DIR
 
 Configure a Raspberry Pi system.
 
 Positional arguments:
-  ROOT_DIR    The root directory of the system to configure.
-  BOOT_DIR    The boot directory of the system to configure.
+  SYSTEM_DIR     The directory where the system to configure is mounted at.
 
 Optional arguments:
-  -h, --help  Show this help text and exit.
+  -d, --dry-run  Don't make any modifications.
+  -h, --help     Show this help text and exit.
 EOF
 }
 
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)
 
-root_boot_dir=
+dry_run=0
+system_dir=
 
 while [ "${#}" -gt 0 ] ; do
 	case "${1}" in
+		-d|--dry-run)
+			dry_run=1
+			;;
 		-h|--help)
 			usage
 			exit
 			;;
 		*)
-			if [ -z "${root_boot_dir}" ] ; then
-				root_boot_dir=${1}
+			if [ -z "${system_dir}" ] ; then
+				system_dir=${1}
 			else
 				echo "** Error: Invalid argument: ${1}" >&2
 				exit 2
@@ -54,35 +135,45 @@ while [ "${#}" -gt 0 ] ; do
 	shift
 done
 
-if [ -z "${root_boot_dir}" ] ; then
+if [ -z "${system_dir}" ] ; then
 	usage
 	exit 2
 fi
 
-if [ -e "${root_boot_dir}"/config.txt ] ; then
-	BOOT_DIR=${root_boot_dir}
-	ROOT_DIR=
-else
-	ROOT_DIR=${root_boot_dir}
-	if [ -e "${ROOT_DIR}"/boot/firmware/config.txt ] ; then
-		BOOT_DIR=${ROOT_DIR}/boot/firmware
-	elif  [ -e "${ROOT_DIR}"/boot/config.txt ] ; then
-		BOOT_DIR=${ROOT_DIR}/boot
-	else
-		echo "** Error: Boot directory not found" >&2
-		exit 1
-	fi
+# Determine system boot and root directories
+set_boot_root_dir "${system_dir}"
+if [ -z "${BOOT_DIR}" ] ; then
+	echo "** Error: Failed to determine boot directory" >&2
+	exit 1
 fi
+print_var BOOT_DIR
+print_var ROOT_DIR
 
-if [ -e "${BOOT_DIR}"/nobtcmd.txt ] ; then
-	CMDLINE_TXT="${BOOT_DIR}"/nobtcmd.txt
-else
-	CMDLINE_TXT="${BOOT_DIR}"/cmdline.txt
+# Determine system ID and type
+set_system_id_type
+if [ -z "${SYSTEM_ID}" ] ; then
+	echo "** Error: Failed to determine system ID" >&2
+	exit 1
+fi
+print_var SYSTEM_ID
+print_var SYSTEM_TYPE
+
+# Determine which cmdline.txt to use
+set_cmdline_txt
+print_var CMDLINE_TXT
+
+# Determine which config.txt to use
+set_config_txt
+print_var CONFIG_TXT
+
+if [ ${dry_run} -eq 1 ] ; then
+	echo "Dry run, exiting..."
+	exit
 fi
 
 trap out EXIT INT TERM HUP
 
-export BOOT_DIR ROOT_DIR CMDLINE_TXT
+export BOOT_DIR ROOT_DIR SYSTEM_ID SYSTEM_TYPE CMDLINE_TXT CONFIG_TXT
 
 "${HERE}"/../hooks/set-cmdline "console=tty1" "console=serial0,115200" \
                                "ignore_loglevel" \
