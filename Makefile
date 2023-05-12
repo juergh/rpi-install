@@ -14,8 +14,8 @@ buildd/initrdd:
 	mkdir -p $@/
 	# Use the git hash as the version
 	git rev-parse HEAD > $@/version
-	# Copy the installer init
-	cp bin/init $@/
+	# Copy the installer init and config
+	cp bin/init bin/init.new bin/install.cfg $@/
 	# Copy binaries and libraries
 	rsync --verbose --archive --ignore-existing --exclude '/boot/' \
 		firmware/ $@/
