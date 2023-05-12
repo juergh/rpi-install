@@ -1,3 +1,34 @@
+v0.0.24
+  * init.new: Misc minor cleanups
+  * install.cfg: Add Lunar images
+  * Include init.new and install.cfg in the installer initrd
+  * init.new: Pass .images as a function argument to callees
+  * hooks: Fix file permissions
+  * configure-system: Detect system details
+  * download-image: Support raspios img.xz images
+  * Rename configure-image to configure-system
+  * configure: Convert hacks to a script
+  * configure: Convert set_cmdline to a script
+  * configure: Convert add_r8152_net_module to a script
+  * configure: Convert set-cloud-init-config to a script
+  * configure: Convert enable_wifi to a script
+  * Rename directory 'conf.d' to 'hooks'
+  * conf.d/install-packages: Fix install detection
+  * configure: Fix enable-auto-login script name
+  * configure: Convert add_user to a script
+  * configure: Convert remove_packages to a script
+  * configure: Convert install_packages to a script
+  * configure: Fix conf.d directory
+  * configure: Convert set_hostname to a script
+  * configure: Convert install_tools to a script
+  * configure: Convert set_service to a script
+  * configure: Enable auto login for desktop images
+  * configure: Add new user to sudo group
+  * download-image: Get and parse SHA256SUMS for the release image name
+  * init.new: Initial commit
+  * rpi-backup: Fix file permissions
+  * configure-image: Purge installer and set default runlevel in desktop images
+  * prepare-image: Bind-mount /dev, /proc and /sys
 v0.0.23
   * firmware: Update to focal-preinstalled-server-armhf+raspi.img.xz (2023-03-07)
 v0.0.22
