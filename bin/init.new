@@ -7,6 +7,8 @@ BASE_URL=http://192.168.99.11/images/
 
 print_image_list()
 {
+	_infile=${1}
+
 	while IFS='|' read -r _idx _title _name ; do
 		if [ -z "${_idx}" ] ; then
 			continue
@@ -15,17 +17,19 @@ print_image_list()
 			echo
 		fi
 		printf -- "%5d) %s\n" "${_idx}" "${_title}"
-	done < .images
+	done < "${_infile}"
 }
 
 get_image_name()
 {
+	_infile=${1} _choice=${2}
+
 	while IFS='|' read -r _idx _title _name ; do
-		if [ "${1}" = "${_idx}" ] ; then
+		if [ "${_choice}" = "${_idx}" ] ; then
 			printf -- "%s" "${_name}"
 			return
 		fi
-	done < .images
+	done < "${_infile}"
 }
 
 do_flash_image()
@@ -149,7 +153,7 @@ while true ; do
 	echo
 	echo "-- Select an image to flash to ${boot_dev}"
 
-	print_image_list
+	print_image_list .images
 
 	echo
 	cat <<EOF
@@ -180,7 +184,7 @@ EOF
 			reboot -f
 			;;
 		*)
-			image=$(get_image_name "${choice}")
+			image=$(get_image_name .images "${choice}")
 			;;
 	esac
 done
