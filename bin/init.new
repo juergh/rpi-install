@@ -136,6 +136,7 @@ fi
 echo "${IMAGES}" > .images
 
 # Main loop
+image=
 while true ; do
 	# Flash the selected image to the selected boot device
 	if [ -n "${image}" ] ; then
@@ -159,7 +160,7 @@ while true ; do
 	cat <<EOF
    90) Run a shell
    91) Enter an image name manually
-   92) Change the flash target device (${boot_dev})
+   92) Change the boot device (${boot_dev})
    99) Reboot
 EOF
 
