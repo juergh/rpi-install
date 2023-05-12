@@ -35,17 +35,18 @@ get_image_name()
 do_flash_image()
 {
 	_image_url=${1} _compressor=${2} _boot_dev=${3}
+	_fail=/.fail
 
-	rm -f .fail
+	rm -f "${_fail}"
 	{
-		/usr/bin/wget -O - "${_image_url}" || touch .fail
+		/usr/bin/wget -O - "${_image_url}" || touch "${_fail}"
 	} | {
-		/usr/bin/"${_compressor}" -cd || touch .fail
+		/usr/bin/"${_compressor}" -cd || touch "${_fail}"
 	} | {
-		/bin/dd of="${_boot_dev}" bs=4k conv=fsync status=none || touch .fail
+		/bin/dd of="${_boot_dev}" bs=4k conv=fsync status=none || touch "${_fail}"
 	}
 
-	if [ -e .fail ] ; then
+	if [ -e "${_fail}" ] ; then
 		return 1
 	fi
 }
@@ -124,16 +125,16 @@ dhclient -v
 
 # Source the local config file
 # shellcheck disable=SC1091
-. install.cfg
+. /install.cfg
 
 # Get the latest config file and source it
-if /usr/bin/wget -O install.new "${BASE_URL}/install.cfg" ; then
+if /usr/bin/wget -O /.install.cfg "${BASE_URL}/install.cfg" ; then
 	# shellcheck disable=SC1091
-	. install.new
+	. /.install.cfg
 fi
 
 # Save the list of images to a file for easier processing
-echo "${IMAGES}" > .images
+echo "${IMAGES}" > /.images
 
 # Main loop
 image=
@@ -154,7 +155,7 @@ while true ; do
 	echo
 	echo "-- Select an image to flash to ${boot_dev}"
 
-	print_image_list .images
+	print_image_list /.images
 
 	echo
 	cat <<EOF
@@ -185,7 +186,7 @@ EOF
 			reboot -f
 			;;
 		*)
-			image=$(get_image_name .images "${choice}")
+			image=$(get_image_name /.images "${choice}")
 			;;
 	esac
 done
