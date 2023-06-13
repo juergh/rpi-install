@@ -24,7 +24,7 @@ function update_distro()
 		raspios)
 			releases=("")
 			flavors=("lite" "full" "desktop")
-			image_tmpl="raspios-\${flavor}-\${arch}.img.zip"
+			image_tmpl="raspios-\${flavor}-\${arch}.img.xz"
 			dist_tmpl="raspios-\${flavor}"
 			;;
 		*)
