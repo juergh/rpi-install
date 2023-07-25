@@ -194,6 +194,7 @@ fi
 run_hook remove-packages unattended-upgrades needrestart ubiquity oem-config
 run_hook install-packages openssh-server sudo
 run_hook install-tools
+run_hook disable-apt-periodic-updates
 run_hook set-cloudinit-config
 run_hook set-hostname
 run_hook add-user ubuntu

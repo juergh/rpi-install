@@ -1,0 +1,9 @@
+#!/bin/bash -eu
+#
+# Disable APT periodic updates
+#
+
+echo "-- Disable APT periodic updates"
+
+key="APT::Periodic::Update-Package-Lists"
+sed -i "s,${key} \"1\",${key} \"0\"," "${ROOT_DIR}"/etc/apt/apt.conf.d/*
