@@ -93,6 +93,14 @@ function set_config_txt
 	done
 }
 
+function run_hook()
+{
+	local hook=${1}
+	shift
+
+	"${HERE}"/../hooks/"${hook}" "${@}"
+}
+
 function usage()
 {
 	cat <<EOF
@@ -175,29 +183,29 @@ trap out EXIT INT TERM HUP
 
 export BOOT_DIR ROOT_DIR SYSTEM_ID SYSTEM_TYPE CMDLINE_TXT CONFIG_TXT
 
-"${HERE}"/../hooks/set-cmdline "console=tty1" "console=serial0,115200" \
-                               "ignore_loglevel" \
-                               "usb-storage.quirks=152d:0579:u"
+run_hook set-cmdline "console=tty1" "console=serial0,115200" \
+                     "ignore_loglevel" \
+                     "usb-storage.quirks=152d:0579:u"
 
 if [ -z "${ROOT_DIR}" ] ; then
 	exit
 fi
 
-"${HERE}"/../hooks/remove-packages unattended-upgrades needrestart ubiquity oem-config
-"${HERE}"/../hooks/install-packages openssh-server sudo
-"${HERE}"/../hooks/install-tools
-"${HERE}"/../hooks/set-cloudinit-config
-"${HERE}"/../hooks/set-hostname
-"${HERE}"/../hooks/add-user ubuntu
-"${HERE}"/../hooks/set-service enable ssh
+run_hook remove-packages unattended-upgrades needrestart ubiquity oem-config
+run_hook install-packages openssh-server sudo
+run_hook install-tools
+run_hook set-cloudinit-config
+run_hook set-hostname
+run_hook add-user ubuntu
+run_hook set-service enable ssh
 
 # Configure desktop images
 if [ -e "${ROOT_DIR}"/usr/share/doc/ubuntu-desktop/copyright ] ; then
-	"${HERE}"/../hooks/set-service set-default graphical.target
-	"${HERE}"/../hooks/enable-auto-login ubuntu
+	run_hook set-service set-default graphical.target
+	run_hook enable-auto-login ubuntu
 fi
 
 # enable_wifi
-"${HERE}"/../hooks/add-net-module r8152
+run_hook add-net-module r8152
 
-"${HERE}"/../hooks/hacks
+run_hook hacks
