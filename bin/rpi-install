@@ -65,6 +65,11 @@ while [ "${#}" -gt 0 ] ; do
 	shift
 done
 
+if [ "${reboot}" -eq 1 ] ; then
+	echo "-- Reboot into installer"
+	reboot "0 tryboot"
+fi
+
 # Find the boot directory
 if [ -z "${boot_dir}" ] ; then
 	if [ -d /boot/firmware ] ; then
@@ -80,13 +85,6 @@ if ! [ -e "${boot_dir}"/config.txt ] ; then
 	exit 1
 fi
 echo "-- Use boot directory ${boot_dir}"
-
-if [ "${reboot}" -eq 1 ] ; then
-	echo "-- Reboot into installer"
-	sed -i 's,^\[gpio4=0\]$,# rpi-install ONCE [gpio4=0],' \
-		"${boot_dir}"/config.txt
-	reboot
-fi
 
 if [ -n "${installer}" ] ; then
 	# Check if the provided installer file exists
@@ -130,6 +128,14 @@ cat << EOF >> "${boot_dir}"/config.txt
 # rpi-install INSTALL BEGIN
 [all]
 [gpio4=0]
+include install/config.txt
+# rpi-install INSTALL END
+EOF
+
+# Add tryboot.txt
+echo "-- Add tryboot.txt"
+cat << EOF > "${boot_dir}"/tryboot.txt
+# rpi-install INSTALL BEGIN
 include install/config.txt
 # rpi-install INSTALL END
 EOF
