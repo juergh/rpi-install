@@ -60,12 +60,6 @@ for _ in $(seq 10) ; do
     sleep .5
 done
 
-echo "-- Clear installer boot flag on ${boot_part}"
-if mount "${boot_part}" /boot ; then
-	sed -i 's,^# rpi-install ONCE ,,' /boot/config.txt
-	umount /boot
-fi
-
 echo "-- Wait for /sys/class/net/eth0"
 for _ in $(seq 10) ; do
 	[ -e /sys/class/net/eth0 ] && break
