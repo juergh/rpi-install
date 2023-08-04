@@ -72,7 +72,7 @@ flash_image()
 echo "-- Run installer"
 
 # Initial setup
-bin/busybox --install /bin
+/bin/busybox --install /bin
 
 [ -d /dev ] || mkdir -m 0755 /dev
 [ -d /root ] || mkdir -m 0700 /root
@@ -142,7 +142,7 @@ while true ; do
 	# Flash the selected image to the selected boot device
 	if [ -n "${image}" ] ; then
 		image_url="${BASE_URL}/${image}"
-		echo "-- Flash image ${_image_url} to ${_boot_dev}"
+		echo "-- Flash image ${image_url} to ${boot_dev}"
 		if flash_image "${image_url}" "${boot_dev}" ; then
 			echo "-- Image flashed, rebooting..."
 			sync
