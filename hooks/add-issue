@@ -1,0 +1,14 @@
+#!/bin/bash -eu
+#
+# Add /etc/issues.d/rpi-install.issue
+#
+
+echo "-- Add /etc/issue.d/rpi-install.issue"
+
+mkdir -p "${ROOT_DIR}"/etc/issue.d
+cat << EOF > "${ROOT_DIR}"/etc/issue.d/rpi-install.issue
+-------------------------------------------------------------------------------
+IPv4:  \4
+IPv6:  \6
+-------------------------------------------------------------------------------
+EOF
