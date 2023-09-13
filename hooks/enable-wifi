@@ -31,8 +31,9 @@ network:
                 "${wifi_ssid}":
                     password: "${wifi_passphrase}"
 EOF
-	else
-		cat << EOF > "${ROOT_DIR}"/etc/wpa_supplicant/wpa_supplicant.conf
+	chmod 600 "${ROOT_DIR}"/etc/netplan/99-rpi-install.yaml
+else
+	cat << EOF > "${ROOT_DIR}"/etc/wpa_supplicant/wpa_supplicant.conf
 ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 update_config=1
 country=${country_code}
@@ -42,4 +43,5 @@ network={
     psk="${wifi_passphrase}"
 }
 EOF
+	chmod 600 "${ROOT_DIR}"/etc/wpa_supplicant/wpa_supplicant.conf
 fi
