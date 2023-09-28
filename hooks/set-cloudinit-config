@@ -13,6 +13,6 @@ fi
 
 if [ -e "${ROOT_DIR}"/etc/cloud/cloud.cfg ] ; then
 	echo "-- Disable users-groups in cloud.cfg"
-	sed -i 's/^ - users-groups/# rpi-install - users-groups/' \
+	sed -i 's/\(^\s*-\s*users[_-]groups\)/# rpi-install \1/' \
 	    "${ROOT_DIR}"/etc/cloud/cloud.cfg
 fi
