@@ -131,7 +131,7 @@ ln -s usr/sbin firmware/sbin
 
 echo "-- Copy kernel and DTBs"
 
-for f in "${rootd}"/boot/firmware/{bcm*.dtb,bootcode.bin,fixup.dat,fixup4.dat,start.elf,start4.elf,vmlinuz} ; do
+for f in "${rootd}"/boot/firmware/{bcm2*.dtb,bootcode.bin,fixup.dat,fixup4.dat,start.elf,start4.elf,vmlinuz} ; do
 	echo "--   ${f#"${rootd}"}"
 	cp  "${f}" firmware/boot/firmware/
 done
@@ -175,5 +175,5 @@ for mod in "${mods[@]}" ; do
 		echo "--   /${m}"
 		mkdir -p firmware/"${m%/*}"
 		cp "${rootd}/${m}" firmware/"${m}"
-	done < <(cd "${rootd}" && find lib/modules -type f -name "${mod}")
+	done < <(cd "${rootd}" && find lib/modules -type f -name "${mod}"'*')
 done
