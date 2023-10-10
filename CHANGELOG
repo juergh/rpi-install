@@ -1,3 +1,20 @@
+v0.0.25
+  * import-firmware: Import only bcm2* DTBs and handle compressed modules
+  * firmware: Update to mantic-preinstalled-server-armhf+raspi.img.xz (2023-10-10)
+  * hooks/set-cloudinit-config: Handle both users_groups and users-groups
+  * rpi-install: Generate tryboot.txt before each reboot
+  * hooks/enable-wifi: Fix permissions of generated files
+  * hooks/add-issue: Initial commit
+  * download-image,update-images: Drop kinetic, add lunar and mantic
+  * init.new: Fix typos
+  * Revert "init.new: Clear installer boot flag"
+  * init: Drop clearing if installer flag
+  * rpi-install: Use the tryboot feature to boot into the installer
+  * configure-system: Disable APT periodic updates
+  * configure-system: Introduce run_hook helper function
+  * update-images: Support raspios img.xz images
+  * init.new: Clear installer boot flag
+  * init.new: Use absolute paths for temporary files
 v0.0.24
   * init.new: Misc minor cleanups
   * install.cfg: Add Lunar images
