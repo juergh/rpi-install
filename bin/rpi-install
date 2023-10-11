@@ -83,7 +83,11 @@ echo "-- Use boot directory ${boot_dir}"
 
 if [ "${reboot}" -eq 1 ] ; then
 	echo "-- Reboot into installer"
-	echo "include install/config.txt" > "${boot_dir}"/tryboot.txt
+	cat <<EOF > "${boot_dir}"/tryboot.txt
+enable_uart=1
+uart_2ndstage=1
+include install/config.txt
+EOF
 	reboot "0 tryboot"
 	exit
 fi
