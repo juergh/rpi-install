@@ -1,0 +1,88 @@
+#!/bin/bash -eu
+#
+# Import kernel, DTBs, DT overlays and bootloader
+#
+
+function out()
+{
+	local rc=${?}
+
+	if [ "${rc}" -ne 0 ] ; then
+		echo "** Error: Script failed" >&2
+	fi
+}
+
+function usage()
+{
+	cat <<EOF
+Usage: import-kernel [-h] DIR
+
+Import kernel, DTBs, DT overlays and bootloader firmware from the provided DIR.
+
+Postitional arguments:
+  DIR
+
+Optional arguments:
+  -h, --help  Show this help text and exit.
+EOF
+}
+
+repo=
+
+while [ "${#}" -gt 0 ] ; do
+	case "${1}" in
+		-h|--help)
+			usage
+			exit
+			;;
+		*)
+			if [ -n "${repo}" ] ; then
+				echo "** Error: Invalid argument: ${1}" >&2
+				exit 2
+			fi
+			repo=${1}
+			;;
+	esac
+	shift
+done
+
+if [ -z "${repo}" ] ; then
+	usage
+	exit 2
+fi
+
+trap out EXIT INT TERM HUP
+
+rm -rf kernel
+
+# Create directory tree
+mkdir -p kernel/boot/overlays
+
+echo "-- Copy kernel, DTBs and bootloader"
+
+for f in "${repo}"/boot/{bcm2709*.dtb,bcm271*.dtb,bootcode.bin,fixup.dat,fixup4.dat,kernel7l.img,kernel8.img,start.elf,start4.elf} ; do
+	echo "--   ${f}"
+	cp  "${f}" kernel/boot/
+done
+
+echo "-- Copy DT overlays"
+
+for f in "${repo}"/boot/overlays/{dwc2.dtbo,overlay_map.dtb} ; do
+	echo "--   ${f}"
+	cp  "${f}" kernel/boot/overlays/
+done
+
+#echo "-- Copy kernel modules"
+
+#mods=(
+#	r8152.ko
+#	uas.ko
+#	usb-storage.ko
+#)
+#for mod in "${mods[@]}" ; do
+#	while IFS= read -r m ; do
+#		echo "--   /${m}"
+#		mkdir -p firmware/"${m%/*}"
+#		cp "${rootd}/${m}" firmware/"${m}"
+#	done < <(cd "${repo}" && find modules/ -type f -name "${mod}"'*')
+#done
