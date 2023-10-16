@@ -123,18 +123,10 @@ fi
 rm -rf firmware
 
 # Create directory tree
-mkdir -p firmware/boot/firmware
 mkdir -p firmware/usr/{bin,lib,sbin}
 ln -s usr/bin firmware/bin
 ln -s usr/lib firmware/lib
 ln -s usr/sbin firmware/sbin
-
-echo "-- Copy kernel and DTBs"
-
-for f in "${rootd}"/boot/firmware/{bcm2*.dtb,bootcode.bin,fixup.dat,fixup4.dat,start.elf,start4.elf,vmlinuz} ; do
-	echo "--   ${f#"${rootd}"}"
-	cp  "${f}" firmware/boot/firmware/
-done
 
 echo "-- Copy binaries and libraries"
 
@@ -161,19 +153,4 @@ for bin in "${bins[@]}" ; do
 			cp "${rootd}/${b}" firmware/"${b}"
 		fi
 	done <  <(find_so "${rootd}" "${bin}" | sort -u)
-done
-
-echo "-- Copy kernel modules"
-
-mods=(
-	r8152.ko
-	uas.ko
-	usb-storage.ko
-)
-for mod in "${mods[@]}" ; do
-	while IFS= read -r m ; do
-		echo "--   /${m}"
-		mkdir -p firmware/"${m%/*}"
-		cp "${rootd}/${m}" firmware/"${m}"
-	done < <(cd "${rootd}" && find lib/modules -type f -name "${mod}"'*')
 done
