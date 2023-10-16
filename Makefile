@@ -3,6 +3,7 @@ ROOTDIR = $(PWD)
 # For reproducible binary installer builds
 LC_ALL = C
 DATE_EPOCH = '1970-01-01 00:00:00 GMT'
+NOW = $(shell date -R)
 
 all: release/rpi-install.tgz
 
@@ -13,12 +14,12 @@ buildd/initrdd:
 	rm -rf $@/
 	mkdir -p $@/
 	# Use the git hash as the version
-	git rev-parse HEAD > $@/version
+	echo $(NOW) > $@/version
+	git rev-parse HEAD >> $@/version
 	# Copy the installer init and config
 	cp bin/init bin/init.new bin/install.cfg $@/
 	# Copy binaries and libraries
-	rsync --verbose --archive --ignore-existing --exclude '/boot/' \
-		firmware/ $@/
+	rsync --verbose --archive --ignore-existing firmware/ $@/
 	# Create the busybox sh link for bin/init
 	ln $@/bin/busybox $@/bin/sh
 
@@ -31,15 +32,15 @@ buildd/initrd.img: buildd/initrdd
 buildd/install: buildd/initrd.img
 	rm -rf $@/
 	mkdir -p $@/
-	cp -r firmware/boot/firmware/* $@/
+	cp -r kernel/boot/* $@/
 	cp buildd/initrd.img $@/
 	cp boot/*.txt $@/
 	# Create dummy README files required by the firmware
 	touch $@/README
 	mkdir -p $@/overlays
 	touch $@/overlays/README
-	# Use the git hash as the version
-	git rev-parse HEAD > $@/version
+	# Copy the version
+	cp buildd/initrdd/version $@/
 
 release/rpi-install.tgz: buildd/install
 	find $< | xargs touch -h -d $(DATE_EPOCH)
