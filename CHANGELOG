@@ -1,3 +1,9 @@
+v0.0.27
+  * kernel: Add new kernels, DTBs and bootloader firmware
+  * Switch to new kernels
+  * import-firmware: Don't import kernel, modules, DTBs and bootloader firmware
+  * import-kernel: Initial commit
+  * firmware: Drop kernel, modules, DTBs and bootloader firmware
 v0.0.26
   * Set uart_2ndstage=1
 v0.0.25
