@@ -1,0 +1,16 @@
+#!/bin/bash -eu
+#
+# Disable flash-kernel backups
+#
+
+if ! [ -e "${ROOT_DIR}"/etc/default/flash-kernel ] ; then
+	exit 0
+fi
+
+echo "-- Disable flash-kernel backups"
+
+cat << EOF >> "${ROOT_DIR}"/etc/default/flash-kernel
+
+# rpi-install
+NO_CREATE_DOT_BAK_FILES=true
+EOF

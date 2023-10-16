@@ -200,6 +200,7 @@ run_hook set-hostname
 run_hook add-user ubuntu
 run_hook set-service enable ssh
 run_hook add-issue
+run_hook disable-flash-kernel-backups
 
 # Configure desktop images
 if [ -e "${ROOT_DIR}"/usr/share/doc/ubuntu-desktop/copyright ] ; then
