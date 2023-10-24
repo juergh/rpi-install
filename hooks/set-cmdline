@@ -26,7 +26,7 @@ uart_2ndstage=1
 EOF
 
 if [ -z "${ROOT_DIR}" ] ; then
-	return
+	exit 0
 fi
 
 # Remove kernel.printk sysctl
