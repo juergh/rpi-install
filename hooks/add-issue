@@ -8,7 +8,10 @@ echo "-- Add /etc/issue.d/rpi-install.issue"
 mkdir -p "${ROOT_DIR}"/etc/issue.d
 cat << EOF > "${ROOT_DIR}"/etc/issue.d/rpi-install.issue
 -------------------------------------------------------------------------------
-IPv4:  \4
-IPv6:  \6
+OS:        \S{NAME} \S{VERSION}
+Kernel:    \r
+Hostname:  \n
+IPv4:      \4
+IPv6:      \6
 -------------------------------------------------------------------------------
 EOF
