@@ -1,0 +1,13 @@
+#!/bin/bash -eu
+#
+# Set raspberrypi config
+#
+
+echo "-- Set config (${*})"
+
+{
+	echo
+	for opt in "${@}" ; do
+		echo "${opt}"
+	done
+} >> "${CONFIG_TXT}"
