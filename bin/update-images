@@ -10,7 +10,7 @@ function update_distro()
 
 	case "${distro}" in
 		ubuntu)
-			releases=("bionic" "focal" "jammy" "lunar" "mantic")
+			releases=("bionic" "focal" "jammy" "mantic" "noble")
 			flavors=("server" "desktop")
 			image_tmpl="\${release}-\${flavor}-\${arch}+raspi.img.xz"
 			dist_tmpl="\${release}-\${flavor}"

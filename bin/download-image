@@ -293,8 +293,8 @@ trap out EXIT INT TERM HUP
 case "${distro}" in
 
 	# Ubuntu Classic
-	bionic|focal|jammy|lunar|mantic|\
-	bionic-*|focal-*|jammy-*|lunar-*|mantic-*)
+	bionic|focal|jammy|mantic|noble|\
+	bionic-*|focal-*|jammy-*|mantic-*|noble-*)
 		flavor=${distro#*-}
 		case "${flavor}" in
 			"${distro}")
