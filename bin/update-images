@@ -46,7 +46,7 @@ function update_distro()
 				export release flavor arch
 				image=$(echo "${image_tmpl}" | envsubst)
 				dist=$(echo "${dist_tmpl}" | envsubst)
-				image_prep=${image%.img.*}+prep.img.gz
+				image_prep=${image%.img.*}+prep.img.xz
 				image_link=${image%%.*}
 				image_link=${image_link%+raspi*}
 

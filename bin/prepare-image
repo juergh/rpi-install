@@ -107,7 +107,7 @@ if [ -n "${installer}" ] && ! [ -e "${installer}" ] ; then
 	exit 1
 fi
 
-outfile=${outfile%.gz}
+outfile=${outfile%.xz}
 if [ -z "${outfile}" ] ; then
 	outfile=${image##*/}
 	outfile=${outfile%.img*}+prep.img
@@ -227,8 +227,8 @@ fi
 # Unmount the partitions
 umount_all
 
-# Gzip the image
+# Compress the image
 echo "-- Compress image"
-gzip -f -S .gz "${outfile}"
+xz -z -f -0 -F xz -S .xz "${outfile}"
 
-echo "-- Created image ${outfile}.gz"
+echo "-- Created image ${outfile}.xz"
