@@ -43,10 +43,9 @@ function set_boot_root_dir
 	fi
 }
 
-function set_system_id_type
+function set_system_id
 {
 	SYSTEM_ID=
-	SYSTEM_TYPE=
 
 	if [ -z "${ROOT_DIR}" ] ; then
 		# If there's no root directory, assume it's Ubuntu Core
@@ -157,14 +156,13 @@ fi
 print_var BOOT_DIR
 print_var ROOT_DIR
 
-# Determine system ID and type
-set_system_id_type
+# Determine system ID
+set_system_id
 if [ -z "${SYSTEM_ID}" ] ; then
 	echo "** Error: Failed to determine system ID" >&2
 	exit 1
 fi
 print_var SYSTEM_ID
-print_var SYSTEM_TYPE
 
 # Determine which cmdline.txt to use
 set_cmdline_txt
@@ -181,7 +179,7 @@ fi
 
 trap out EXIT INT TERM HUP
 
-export BOOT_DIR ROOT_DIR SYSTEM_ID SYSTEM_TYPE CMDLINE_TXT CONFIG_TXT
+export BOOT_DIR ROOT_DIR SYSTEM_ID CMDLINE_TXT CONFIG_TXT
 
 run_hook set-cmdline "console=tty1" "console=serial0,115200" \
                      "ignore_loglevel" \
