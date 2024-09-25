@@ -1,0 +1,10 @@
+#!/bin/bash -eu
+#
+# Make eth0 mandatory (LP: #2036358)
+#
+
+echo "-- Make eth0 mandatory"
+
+if [ -e "${BOOT_DIR}"/network-config ] ; then
+    sed -i 's/^\( * optional:\).*/\1 false/' "${BOOT_DIR}"/network-config
+fi
