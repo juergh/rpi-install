@@ -234,8 +234,8 @@ Image distros:
   Raspberry Pi OS Full:    raspios-full
 
 Image channels:
-  Ubuntu Classic:          daily, release
-  Ubuntu Desktop:          daily, release
+  Ubuntu Classic:          devel, daily, release
+  Ubuntu Desktop:          devel, daily, release
   Ubuntu Core:             edge, beta, candidate, stable
                            dangerous-edge, dangerous-beta, dangerous-candidate, dangerous-stable
   Raspberry Pi OS:         latest
@@ -293,8 +293,8 @@ trap out EXIT INT TERM HUP
 case "${distro}" in
 
 	# Ubuntu Classic
-	bionic|focal|jammy|mantic|noble|\
-	bionic-*|focal-*|jammy-*|mantic-*|noble-*)
+	bionic|focal|jammy|noble|oracular|\
+	bionic-*|focal-*|jammy-*|noble-*|oracular-*)
 		flavor=${distro#*-}
 		case "${flavor}" in
 			"${distro}")
@@ -313,7 +313,7 @@ case "${distro}" in
 		;;
 
 	# Ubuntu Core
-	core16|core18|core20|core22)
+	core16|core18|core20|core22|core24)
 		download_ubuntu_core "${distro#core}" "${arch}" "${channel}" "${outfile}"
 		;;
 
