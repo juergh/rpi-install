@@ -68,8 +68,9 @@ function set_cmdline_txt
 
 	CMDLINE_TXT=
 
-	for f in nobtcmd.txt cmdline.txt ; do
-		f=${BOOT_DIR}/${f}
+	for f in systems/\*/kernel/cmdline.txt nobtcmd.txt cmdline.txt ; do
+		# shellcheck disable=SC2086
+		f=$(find "${BOOT_DIR}"/${f} -type f 2>/dev/null || true)
 		if [ -e "${f}" ] ; then
 			CMDLINE_TXT=${f}
 			return
@@ -83,8 +84,9 @@ function set_config_txt
 
 	CONFIG_TXT=
 
-	for f in extraconfig.txt config.txt ; do
-		f=${BOOT_DIR}/${f}
+	for f in systems/\*/kernel/cmdline.txt extraconfig.txt config.txt ; do
+		# shellcheck disable=SC2086
+		f=$(find "${BOOT_DIR}"/${f} -type f 2>/dev/null || true)
 		if [ -e "${f}" ] ; then
 			CONFIG_TXT=${f}
 			return
