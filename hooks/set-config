@@ -5,9 +5,14 @@
 
 echo "-- Set config (${*})"
 
-{
-	echo
-	for opt in "${@}" ; do
-		echo "${opt}"
-	done
-} >> "${CONFIG_TXT}"
+# shellcheck disable=SC2153
+for config_txt in ${CONFIG_TXT} ; do
+	{
+		echo
+		for opt in "${@}" ; do
+			echo "${opt}"
+		done
+	} >> "${config_txt}"
+
+	echo "   ${config_txt}"
+done

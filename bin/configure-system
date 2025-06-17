@@ -72,10 +72,11 @@ function set_cmdline_txt
 		# shellcheck disable=SC2086
 		f=$(find "${BOOT_DIR}"/${f} -type f 2>/dev/null || true)
 		if [ -e "${f}" ] ; then
-			CMDLINE_TXT=${f}
-			return
+			CMDLINE_TXT="${CMDLINE_TXT} ${f}"
 		fi
 	done
+
+	CMDLINE_TXT=${CMDLINE_TXT# }
 }
 
 function set_config_txt
@@ -84,14 +85,15 @@ function set_config_txt
 
 	CONFIG_TXT=
 
-	for f in systems/\*/kernel/cmdline.txt extraconfig.txt config.txt ; do
+	for f in systems/\*/kernel/config.txt extraconfig.txt config.txt ; do
 		# shellcheck disable=SC2086
 		f=$(find "${BOOT_DIR}"/${f} -type f 2>/dev/null || true)
 		if [ -e "${f}" ] ; then
-			CONFIG_TXT=${f}
-			return
+			CONFIG_TXT="${CONFIG_TXT} ${f}"
 		fi
 	done
+
+	CONFIG_TXT=${CONFIG_TXT# }
 }
 
 function run_hook()

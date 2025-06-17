@@ -5,15 +5,20 @@
 
 echo "-- Set cmdline (${*})"
 
-cmdline=()
-readarray -t opts < <(head -1 "${CMDLINE_TXT}" | tr ' ' '\n')
-for opt in "${opts[@]}" ; do
-	case "${opt}" in
-		console=*|quiet|splash) ;;  # Drop the option
-		*) cmdline+=("${opt}") ;;   # Keep the option
-	esac
+# shellcheck disable=SC2153
+for cmdline_txt in ${CMDLINE_TXT}; do
+	cmdline=()
+	readarray -t opts < <(head -1 "${cmdline_txt}" | tr ' ' '\n')
+	for opt in "${opts[@]}" ; do
+		case "${opt}" in
+			console=*|quiet|splash) ;;  # Drop the option
+			*) cmdline+=("${opt}") ;;   # Keep the option
+		esac
+	done
+	echo "${cmdline[*]} ${*}" > "${cmdline_txt}"
+
+	echo "   ${cmdline_txt}: $(head -1 "${cmdline_txt}")"
 done
-echo "${cmdline[*]} ${*}" > "${CMDLINE_TXT}"
 
 if [ -z "${ROOT_DIR}" ] ; then
 	exit 0
