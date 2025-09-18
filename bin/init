@@ -1,27 +1,48 @@
 #!/bin/sh
-#
-# Download and install a Raspberry Pi image from a Bottle-Pi API server
-#
 
-BOTTLE_PI_HOST=192.168.99.11:5000
+BASE_URL=http://192.168.99.11/images/
 
-install_image()
+# ----------------------------------------------------------------------------
+# Helper functions
+
+do_flash_image()
 {
+	image_url=${1} compressor=${2} boot_dev=${3}
+
 	rm -f .fail
+
 	{
-		/usr/bin/wget -O - "${1}" || touch .fail
+		/usr/bin/wget -O - "$image_url}" || touch .fail
 	} | {
-		/usr/bin/"${2}" -cd || touch .fail
+		/usr/bin/"${compressor}" -cd || touch .fail
 	} | {
-		/bin/dd of="${3}" bs=4k conv=fsync status=none || touch .fail
+		/bin/dd of="${boot_dev}" bs=4k conv=fsync status=none || touch .fail
 	}
+
 	if [ -e .fail ] ; then
 		return 1
 	fi
 }
 
+flash_image()
+{
+	image_url=${1} boot_dev=${2}
+
+	for compressor in xz gzip ; do
+		if do_flash_image "${image_url}" "${compressor}" "${boot_dev}" ; then
+			return
+		fi
+	done
+
+	return 1
+}
+
+# ----------------------------------------------------------------------------
+# Main entry point
+
 echo "-- Run installer"
 
+# Initial setup
 /bin/busybox --install /bin
 
 [ -d /dev ] || mkdir -m 0755 /dev
@@ -41,183 +62,92 @@ mount -t devpts -o noexec,nosuid,gid=5,mode=0620 devpts /dev/pts || true
 mkdir -p /etc /var/lib/dhcp /var/run
 touch /etc/fstab
 
+# Load necessary kernel modules
 echo "-- Load kernel modules"
 depmod
 modprobe r8152
 modprobe uas
 
+# Wait for the root device
 echo "-- Wait for /dev/mmcblk0p1 or /dev/sda1"
 for _ in $(seq 10) ; do
 	if [ -b /dev/mmcblk0p1 ] ; then
 		boot_dev=/dev/mmcblk0
-		boot_part=/dev/mmcblk0p1
 		break
 	elif [ -b /dev/sda1 ] ; then
 		boot_dev=/dev/sda
-		boot_part=/dev/sda1
 		break
 	fi
-    sleep .5
+	sleep .5
 done
 
+# Wait for the network device
 echo "-- Wait for /sys/class/net/eth0"
 for _ in $(seq 10) ; do
 	[ -e /sys/class/net/eth0 ] && break
 	sleep .5
 done
 
-echo "-- Get an IP"
+# Get an IP address
+echo "-- Get an IP address"
 dhclient -v
 
-echo "-- Query Bottle-Pi host ${BOTTLE_PI_HOST}"
-# shellcheck disable=SC2002
-serial=$(cat /proc/device-tree/serial-number | tr -d '\0\n')
-resp=$(/usr/bin/wget -q -O - "http://${BOTTLE_PI_HOST}/redfish/v1/Systems/${serial}/Actions/ComputerSystem.Update" | tr -d '\n\t ')
-# Extract the update status from the response
-status=${resp#*\"Status\":\"}
-status=${status%%\"*}
-if [ "${status}" = "Pending" ] ; then
-	# Extract the Image name from the respone
-	image=${resp#*\"Image\":\"}
-	image=${image%%\"*}
-	if [ -n "${image}" ] ; then
-		# Clear the pending update
-		/usr/bin/wget -q -O - "http://${BOTTLE_PI_HOST}/redfish/v1/Systems/${serial}/Actions/ComputerSystem.Update.Delete"
-	fi
-fi
+# Get the list of available images
+echo "-- Get the list of available images"
+/usr/bin/wget -O images.list "${BASE_URL}"/images
 
-# 'Fix' 'Workqueue: events_freezable mmc_rescan' errors
-sysctl -w vm.dirty_background_ratio=5
-sysctl -w vm.dirty_ratio=10
-
-# Run the interactive installer
+# Main loop
+image=
 while true ; do
+	# Flash the selected image to the selected boot device
 	if [ -n "${image}" ] ; then
-		image_url="http://${BOTTLE_PI_HOST}/redfish/v1/Images/${image#/redfish/v1/Images/}"
-		echo "-- Install image ${image_url} on ${boot_dev}"
-		fail=0
-		if ! install_image "${image_url}" gzip "${boot_dev}" ; then
-			if ! install_image "${image_url}" xz "${boot_dev}" ; then
-				fail=1
-			fi
-		fi
-		if [ ${fail} -eq 1 ] ; then
-			echo "-- Failed to install image"
-		else
-			echo "-- Image installed, rebooting..."
+		image_url="${BASE_URL}/${image}"
+		echo "-- Flash image ${image_url} to ${boot_dev}"
+		if flash_image "${image_url}" "${boot_dev}" ; then
+			echo "-- Image flashed, rebooting..."
 			sync
 			reboot -f
+		else
+			echo "-- Failed to flash image"
 		fi
 	fi
 
-	cat <<__EOF__
+	cat <<EOF
 
--- Select an image to install on ${boot_dev}
+-- Select an image to flash to ${boot_dev}
 
-      0) Kinetic - Server - arm64
-      1) Kinetic - Server - armhf
-      2) Jammy   - Server - arm64
-      3) Jammy   - Server - armhf
-      4) Focal   - Server - arm64
-      5) Focal   - Server - armhf
-      6) Bionic  - Server - arm64
-      7) Bionic  - Server - armhf
+$(cat images.list)
 
-     10) Kinetic - Desktop - arm64
-     11) Jammy   - Desktop - arm64
+   90) Run a shell
+   91) Enter an image name manually
+   92) Change the boot device (${boot_dev})
+   99) Reboot
 
-     20) Core22 - arm64
-     21) Core22 - armhf
-     22) Core20 - arm64
-     23) Core20 - armhf
-     24) Core18 - arm64
-     25) Core18 - armhf
-     26) Core16 - armhf
+EOF
 
-     30) Raspberry Pi OS - Lite    - arm64
-     31) Raspberry Pi OS - Lite    - armhf
-     32) Raspberry Pi OS - Desktop - arm64
-     33) Raspberry Pi OS - Desktop - armhf
-     34) Raspberry Pi OS - Full    - arm64
-     35) Raspberry Pi OS - Full    - armhf
+	printf -- "-- Choice: "
+	read -r choice
+	echo
 
-     90) Run a shell
-     91) Enter an image name manually
-     92) Change the install target device (${boot_dev})
-     99) Reboot
-
-__EOF__
-
-	# shellcheck disable=SC2039
-	echo -n "-- Choice: "
-	read -r tmp
-
-	image=
-	case "${tmp}" in
-		#
-		# Ubuntu Server
-		#
-		0) image=kinetic-server-arm64 ;;
-		1) image=kinetic-server-armhf ;;
-		2) image=jammy-server-arm64 ;;
-		3) image=jammy-server-armhf ;;
-		4) image=focal-server-arm64 ;;
-		5) image=focal-server-armhf ;;
-		6) image=bionic-server-arm64 ;;
-		7) image=bionic-server-armhf ;;
-
-		#
-		# Ubuntu Desktop
-		#
-		10) image=kinetic-desktop-arm64 ;;
-		11) image=jammy-desktop-arm64 ;;
-
-		#
-		# Ubuntu Core
-		#
-		20) image=core-22-arm64 ;;
-		21) image=core-22-armhf ;;
-		22) image=core-20-arm64 ;;
-		23) image=core-20-armhf ;;
-		24) image=core-18-arm64 ;;
-		25) image=core-18-armhf ;;
-		26) image=core-16-armhf ;;
-
-		#
-		# Raspberry Pi OS
-		#
-		30) image=raspios-lite-arm64 ;;
-		31) image=raspios-lite-armhf ;;
-		32) image=raspios-desktop-arm64 ;;
-		33) image=raspios-desktop-armhf ;;
-		34) image=raspios-full-arm64 ;;
-		35) image=raspios-full-armhf ;;
-
-		#
-		# Misc options
-		#
+	case "${choice}" in
 		90)
 			/bin/sh
 			;;
 		91)
-			# shellcheck disable=SC2039
-			echo -n "-- Image name: "
+			printf -- "-- Image name: "
 			read -r image
 			;;
 		92)
-			# shellcheck disable=SC2039
-			echo -n "-- Boot device: "
+			printf -- "-- Boot device: "
 			read -r boot_dev
 			;;
 		99)
 			sync
 			reboot -f
 			;;
-
-		#
-		# Default
-		#
 		*)
+			image=$(grep " ${choice})" images.list)
+			image=${image##* }
 			;;
 	esac
 done
