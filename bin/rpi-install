@@ -88,6 +88,12 @@ enable_uart=1
 uart_2ndstage=1
 include install/config.txt
 EOF
+
+	# FIXME: We need to undo this
+	if [ -e "${boot_dir}"/autoboot.txt ] ; then
+		mv "${boot_dir}"/autoboot.txt "${boot_dir}"/autoboot.txt.rpi-install
+	fi
+
 	reboot "0 tryboot"
 	exit
 fi
