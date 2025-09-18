@@ -12,7 +12,7 @@ do_flash_image()
 	rm -f .fail
 
 	{
-		/usr/bin/wget -O - "$image_url}" || touch .fail
+		/usr/bin/wget -O - "${image_url}" || touch .fail
 	} | {
 		/usr/bin/"${compressor}" -cd || touch .fail
 	} | {
