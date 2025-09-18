@@ -93,6 +93,7 @@ echo "-- Get an IP address"
 dhclient -v
 
 # Get the list of available images
+echo "-- Get the list of available images"
 /usr/bin/wget -O images.list "${BASE_URL}"/images
 
 # Main loop
