@@ -5,63 +5,34 @@ BASE_URL=http://192.168.99.11/images/
 # ----------------------------------------------------------------------------
 # Helper functions
 
-print_image_list()
-{
-	_infile=${1}
-
-	while IFS='|' read -r _idx _title _name ; do
-		if [ -z "${_idx}" ] ; then
-			continue
-		fi
-		if [ $((_idx % 10 )) -eq 0 ] ; then
-			echo
-		fi
-		printf -- "%5d) %s\n" "${_idx}" "${_title}"
-	done < "${_infile}"
-}
-
-get_image_name()
-{
-	_infile=${1} _choice=${2}
-
-	while IFS='|' read -r _idx _title _name ; do
-		if [ "${_choice}" = "${_idx}" ] ; then
-			printf -- "%s" "${_name}"
-			return
-		fi
-	done < "${_infile}"
-}
-
 do_flash_image()
 {
-	_image_url=${1} _compressor=${2} _boot_dev=${3}
-	_fail=/.fail
+	image_url=${1} compressor=${2} boot_dev=${3}
 
-	rm -f "${_fail}"
+	rm -f .fail
+
 	{
-		/usr/bin/wget -O - "${_image_url}" || touch "${_fail}"
+		/usr/bin/wget -O - "$image_url}" || touch .fail
 	} | {
-		/usr/bin/"${_compressor}" -cd || touch "${_fail}"
+		/usr/bin/"${compressor}" -cd || touch .fail
 	} | {
-		/bin/dd of="${_boot_dev}" bs=4k conv=fsync status=none || touch "${_fail}"
+		/bin/dd of="${boot_dev}" bs=4k conv=fsync status=none || touch .fail
 	}
 
-	if [ -e "${_fail}" ] ; then
+	if [ -e .fail ] ; then
 		return 1
 	fi
 }
 
 flash_image()
 {
-	_image_url=${1} _boot_dev=${2}
+	image_url=${1} boot_dev=${2}
 
-	if do_flash_image "${_image_url}" gzip "${_boot_dev}" ; then
-		return
-	fi
-
-	if do_flash_image "${_image_url}" xz "${_boot_dev}" ; then
-		return
-	fi
+	for compressor in xz gzip ; do
+		if do_flash_image "${image_url}" "${compressor}" "${boot_dev}" ; then
+			return
+		fi
+	done
 
 	return 1
 }
@@ -102,11 +73,9 @@ echo "-- Wait for /dev/mmcblk0p1 or /dev/sda1"
 for _ in $(seq 10) ; do
 	if [ -b /dev/mmcblk0p1 ] ; then
 		boot_dev=/dev/mmcblk0
-		boot_part=/dev/mmcblk0p1
 		break
 	elif [ -b /dev/sda1 ] ; then
 		boot_dev=/dev/sda
-		boot_part=/dev/sda1
 		break
 	fi
 	sleep .5
@@ -120,21 +89,11 @@ for _ in $(seq 10) ; do
 done
 
 # Get an IP address
-echo "-- Get IP address"
+echo "-- Get an IP address"
 dhclient -v
 
-# Source the local config file
-# shellcheck disable=SC1091
-. /install.cfg
-
-# Get the latest config file and source it
-if /usr/bin/wget -O /.install.cfg "${BASE_URL}/install.cfg" ; then
-	# shellcheck disable=SC1091
-	. /.install.cfg
-fi
-
-# Save the list of images to a file for easier processing
-echo "${IMAGES}" > /.images
+# Get the list of available images
+/usr/bin/wget -O images.list "${BASE_URL}"/images
 
 # Main loop
 image=
@@ -152,23 +111,23 @@ while true ; do
 		fi
 	fi
 
-	echo
-	echo "-- Select an image to flash to ${boot_dev}"
-
-	print_image_list /.images
-
-	echo
 	cat <<EOF
+
+-- Select an image to flash to ${boot_dev}
+
+$(cat images.list)
+
    90) Run a shell
    91) Enter an image name manually
    92) Change the boot device (${boot_dev})
    99) Reboot
+
 EOF
 
-	echo
 	printf -- "-- Choice: "
 	read -r choice
 	echo
+
 	case "${choice}" in
 		90)
 			/bin/sh
@@ -186,7 +145,8 @@ EOF
 			reboot -f
 			;;
 		*)
-			image=$(get_image_name /.images "${choice}")
+			image=$(grep " ${choice})" images.list)
+			image=${image##* }
 			;;
 	esac
 done
