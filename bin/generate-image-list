@@ -1,0 +1,46 @@
+#!/bin/bash
+#
+# Generate a sorted list of available images
+#
+
+function ubuntu_releases()
+{
+	curl -s https://changelogs.ubuntu.com/meta-release | awk '$1 == "Dist:" { print $2 }'
+	curl -s https://changelogs.ubuntu.com/meta-release-development | awk '$1 == "Dist:" { print $2 }'
+}
+
+function list_images()
+{
+	ubuntu=$(ubuntu_releases | tr '\n' ',')
+	ubuntu=",${ubuntu},"
+
+	for f in * ; do
+		if [ -h "${f}" ] ; then
+			key=${f%%-*}
+
+			if [ "${ubuntu/,${key},}" != "${ubuntu}" ] ; then
+				prio=1
+			else
+				case "${f}" in
+					ubuntu-*)  prio=2 ;;
+					core-*)    prio=3 ;;
+					raspios-*) prio=4 ;;
+					debian-*)  prio=5 ;;
+					*)         prio=6 ;;
+				esac
+			fi
+			echo "${prio} ${f}"
+		fi
+	done | sort -V
+}
+
+prev_prio=1
+cnt=1
+while read -r prio image ; do
+	if [ "${prio}" != "${prev_prio}" ] ; then
+		echo
+	fi
+	printf "%6d) %s\n" "${cnt}" "${image}"
+	prev_prio=${prio}
+	cnt=$((cnt + 1))
+done < <(list_images)
