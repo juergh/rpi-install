@@ -126,10 +126,10 @@ else
 fi
 
 # Temporary hack to support Pi Zero 2 until all kernels and images catch up
-if ! [ -e "${boot_dir}"/bcm2710-rpi-zero-2.dtb ] ; then
-	echo "-- Copy bcm2710-rpi-zero-2.dtb"
-	cp "${boot_dir}"/install/bcm2710-rpi-zero-2.dtb "${boot_dir}"
-fi
+#if ! [ -e "${boot_dir}"/bcm2710-rpi-zero-2.dtb ] ; then
+#	echo "-- Copy bcm2710-rpi-zero-2.dtb"
+#	cp "${boot_dir}"/install/bcm2710-rpi-zero-2.dtb "${boot_dir}"
+#fi
 
 # Modify config.txt
 echo "-- Modify config.txt"
