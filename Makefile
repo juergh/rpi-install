@@ -16,8 +16,8 @@ buildd/initrdd:
 	# Use the git hash as the version
 	echo $(NOW) > $@/version
 	git rev-parse HEAD >> $@/version
-	# Copy the installer init and config
-	cp bin/init bin/init.new bin/install.cfg $@/
+	# Copy the installer init
+	cp bin/init bin/init.new $@/
 	# Copy binaries and libraries
 	rsync --verbose --archive --ignore-existing firmware/ $@/
 	# Create the busybox sh link for bin/init
