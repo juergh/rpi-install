@@ -60,14 +60,14 @@ mkdir -p kernel/boot/overlays
 
 echo "-- Copy kernel, DTBs and bootloader"
 
-for f in "${repo}"/{bcm2709*.dtb,bcm271*.dtb,bootcode.bin,fixup.dat,fixup4.dat,kernel7l.img,kernel8.img,start.elf,start4.elf} ; do
+for f in "${repo}"/boot/{bcm2709*.dtb,bcm271*.dtb,bootcode.bin,fixup.dat,fixup4.dat,kernel7l.img,kernel8.img,start.elf,start4.elf} ; do
 	echo "--   ${f}"
 	cp  "${f}" kernel/boot/
 done
 
 echo "-- Copy DT overlays"
 
-for f in "${repo}"/overlays/{dwc2.dtbo,overlay_map.dtb} ; do
+for f in "${repo}"/boot/overlays/{dwc2.dtbo,overlay_map.dtb} ; do
 	echo "--   ${f}"
 	cp  "${f}" kernel/boot/overlays/
 done
