@@ -20,6 +20,9 @@ buildd/initrdd:
 	cp bin/init $@/
 	# Copy binaries and libraries
 	rsync --verbose --archive --ignore-existing firmware/ $@/
+	# Copy kernel modules
+	mkdir -p $@/lib/modules/
+	rsync --verbose --archive --ignore-existing kernel/modules/ $@/lib/modules/
 	# Create the busybox sh link for bin/init
 	ln $@/bin/busybox $@/bin/sh
 

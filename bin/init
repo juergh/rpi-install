@@ -65,6 +65,7 @@ touch /etc/fstab
 # Load necessary kernel modules
 echo "-- Load kernel modules"
 depmod
+modprobe cdc_ether
 modprobe r8152
 modprobe uas
 

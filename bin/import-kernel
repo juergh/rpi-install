@@ -1,6 +1,6 @@
 #!/bin/bash -eu
 #
-# Import kernel, DTBs, DT overlays and bootloader
+# Import kernel, DTBs, DT overlays and bootloader from the raspberrypi firmware repo
 #
 
 function out()
@@ -51,6 +51,11 @@ if [ -z "${repo}" ] ; then
 	exit 2
 fi
 
+if ! [ -e "${repo}"/README.md ] ; then
+	echo "**Error: ${repo}/README.md not found. Is ${repo} a clone of the raspberrypi firmware repo?"
+	exit 1
+fi
+
 trap out EXIT INT TERM HUP
 
 rm -rf kernel
@@ -72,17 +77,23 @@ for f in "${repo}"/boot/overlays/{dwc2.dtbo,overlay_map.dtb} ; do
 	cp  "${f}" kernel/boot/overlays/
 done
 
-#echo "-- Copy kernel modules"
+echo "-- Copy kernel modules"
 
-#mods=(
-#	r8152.ko
-#	uas.ko
-#	usb-storage.ko
-#)
-#for mod in "${mods[@]}" ; do
-#	while IFS= read -r m ; do
-#		echo "--   /${m}"
-#		mkdir -p firmware/"${m%/*}"
-#		cp "${rootd}/${m}" firmware/"${m}"
-#	done < <(cd "${repo}" && find modules/ -type f -name "${mod}"'*')
-#done
+mods=(
+	cdc_ether.ko  # For testing with QEMU
+	r8152.ko
+	uas.ko
+	usb-storage.ko
+)
+
+for mod in "${mods[@]}" ; do
+	while IFS= read -r m ; do
+		case "${m}" in
+			*-v7l+/*|*-v8+/*)
+				echo "--   ${repo}/${m}"
+				mkdir -p kernel/"${m%/*}"
+				cp "${repo}/${m}" kernel/"${m}"
+				;;
+		esac
+	done < <(cd "${repo}" && find modules/ -type f -name "${mod}"'*')
+done
