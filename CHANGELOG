@@ -1,3 +1,7 @@
+v0.0.29
+  * kernel: Import from github.com/raspberrypi/firmware (e57538c91b47)
+  * Import kernel modules
+  * Revert "import-kernel: Drop 'boot' path component"
 v0.0.28
   * init: Fix typo
   * Switch to the new init script
