@@ -1,3 +1,31 @@
+v0.0.28
+  * init: Fix typo
+  * Switch to the new init script
+  * init.new: Be more verbose
+  * import-kernel: Drop 'boot' path component
+  * kernel: Import from 2025-05-13-raspios-bookworm-armhf-lite.img.xz
+  * rpi-install: Comment out dtb hack
+  * init.new: Use new image list format
+  * Add bin/generate-image-list
+  * Remove bin/install.cfg
+  * rpi-install: Move autoboot.txt out of the way
+  * hooks: Update all commandline files
+  * Add questing
+  * Modify all cmdline and config files
+  * configure-system: Update {cmdline,config}.txt of newer core images
+  * Add plucky
+  * rpi-hostname: Add the RAM amount to the hostname
+  * Update supported releases
+  * hooks/make-eth0-mandatory: Initial commit
+  * Remove unused SYSTEM_TYPE
+  * Switch to xz compression for prep'ed images
+  * Remove lunar, add noble
+  * Introduce new hook script set-config and use it
+  * ssh: Update public key
+  * hooks/add-issue: Be more verbose
+  * ssh: Update public key
+  * hooks/set-cmdline: Fix early exit
+  * hooks/disable-flash-kernel-backups: Initial commit
 v0.0.27
   * kernel: Add new kernels, DTBs and bootloader firmware
   * Switch to new kernels
