@@ -154,7 +154,9 @@ if [ -z "${installer}" ] ; then
 
 	# Download ourselves
 	echo "-- Install ${url}"
+	tempfile=/tmp/rpi-install-$$
 	destfile=$(which rpi-install || echo "/usr/bin/rpi-install")
-	wget -q -O "${destfile}" "${url}"
-	chmod 755 "${destfile}"
+	wget -q -O "${tempfile}" "${url}"
+	chmod 755 "${tempfile}"
+	mv "${tempfile}" "${destfile}"
 fi
