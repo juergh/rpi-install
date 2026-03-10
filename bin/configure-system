@@ -41,6 +41,11 @@ function set_boot_root_dir
 	elif  [ -e "${ROOT_DIR}"/boot/config.txt ] ; then
 		BOOT_DIR=${ROOT_DIR}/boot
 	fi
+
+	if [ -z "${BOOT_DIR}" ] ; then
+		echo "** Error: Failed to determine boot directory" >&2
+		exit 1
+	fi
 }
 
 function set_system_id
@@ -60,40 +65,33 @@ function set_system_id
 	fi
 
 	SYSTEM_ID=${SYSTEM_ID,,}
+
+	if [ -z "${SYSTEM_ID}" ] ; then
+		echo "** Error: Failed to determine system ID" >&2
+		exit 1
+	fi
 }
 
 function set_cmdline_txt
 {
-	local f
+	CMDLINE_TXT=$(find "${BOOT_DIR}" \( -name cmdline.txt -o -name nobtcmd.txt \) | tr '\n' ' ')
+	CMDLINE_TXT=${CMDLINE_TXT% }
 
-	CMDLINE_TXT=
-
-	for f in systems/\*/kernel/cmdline.txt nobtcmd.txt cmdline.txt ; do
-		# shellcheck disable=SC2086
-		f=$(find "${BOOT_DIR}"/${f} -type f 2>/dev/null || true)
-		if [ -e "${f}" ] ; then
-			CMDLINE_TXT="${CMDLINE_TXT} ${f}"
-		fi
-	done
-
-	CMDLINE_TXT=${CMDLINE_TXT# }
+	if [ -z "${CMDLINE_TXT}" ] ; then
+		echo "** Error: Failed to determine cmdline.txt" >&2
+		exit 1
+	fi
 }
 
 function set_config_txt
 {
-	local f
+	CONFIG_TXT=$(find "${BOOT_DIR}" \( -name config.txt -o -name extraconfig.txt \) | tr '\n' ' ')
+	CONFIG_TXT=${CONFIG_TXT% }
 
-	CONFIG_TXT=
-
-	for f in systems/\*/kernel/config.txt extraconfig.txt config.txt ; do
-		# shellcheck disable=SC2086
-		f=$(find "${BOOT_DIR}"/${f} -type f 2>/dev/null || true)
-		if [ -e "${f}" ] ; then
-			CONFIG_TXT="${CONFIG_TXT} ${f}"
-		fi
-	done
-
-	CONFIG_TXT=${CONFIG_TXT# }
+	if [ -z "${CONFIG_TXT}" ] ; then
+		echo "** Error: Failed to determine config.txt" >&2
+		exit 1
+	fi
 }
 
 function run_hook()
@@ -153,19 +151,11 @@ fi
 
 # Determine system boot and root directories
 set_boot_root_dir "${system_dir}"
-if [ -z "${BOOT_DIR}" ] ; then
-	echo "** Error: Failed to determine boot directory" >&2
-	exit 1
-fi
 print_var BOOT_DIR
 print_var ROOT_DIR
 
 # Determine system ID
 set_system_id
-if [ -z "${SYSTEM_ID}" ] ; then
-	echo "** Error: Failed to determine system ID" >&2
-	exit 1
-fi
 print_var SYSTEM_ID
 
 # Determine which cmdline.txt to use
