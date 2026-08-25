@@ -40,20 +40,13 @@ function download_ubuntu_classic()
 	local release=${1} flavor=${2} arch=${3} channel=${4} outfile=${5}
 	local path raspi url remote_image
 
-	# Download order
-	declare -A channel_order=(
-		["devel"]="daily"
-		["daily"]="release"
-		["release"]="-1"
-	)
-
 	path=ubuntu-server
 	if [ "${flavor}" = "desktop" ] ; then
 		if [ "${arch}" != "arm64" ] ; then
 			echo "-- Error: Ubuntu desktop is only supported on arm64" >&2
 			exit 1
 		fi
-		path=
+		path=ubuntu
 	fi
 
 	raspi=raspi
@@ -61,18 +54,14 @@ function download_ubuntu_classic()
 		raspi=raspi3
 	fi
 
-	channel=${channel:-devel}
+	channel=${channel:-daily}
 	case "${channel}" in
-		devel)
-			url=http://cdimage.ubuntu.com/${path}/daily-preinstalled/current/
-			remote_image=${release}-preinstalled-${flavor}-${arch}+${raspi}.img.xz
-			;;
 		daily)
 			url=http://cdimage.ubuntu.com/${path}/${release}/daily-preinstalled/current/
 			remote_image=${release}-preinstalled-${flavor}-${arch}+${raspi}.img.xz
 			;;
 		release)
-			url=http://cdimage.ubuntu.com/releases/${release}/release/
+			url=http://cdimage.ubuntu.com/ubuntu/releases/${release}/release/
 			# Get the name of the release image
 			remote_image=$(curl -s "${url}"/SHA256SUMS | \
 			               grep -oP "ubuntu-.*?-preinstalled-${flavor}-${arch}\+${raspi}\.img\.xz" || true)
@@ -93,11 +82,10 @@ function download_ubuntu_classic()
 
 	# Download the image
 	if ! download_image "${url}/${remote_image}" "${outfile}" ; then
-		next_channel=${channel_order[${channel}]}
-		if [ "${next_channel}" = "-1" ] ; then
-			# Nothing left to try
-			exit 1
-		fi
+		case "${channel}" in
+			daily)   next_channel=release ;;
+			release) exit 1 ;;
+		esac
 		download_ubuntu_classic "${release}" "${flavor}" "${arch}" "${next_channel}" "${outfile}"
 	fi
 }
@@ -234,8 +222,8 @@ Image distros:
   Raspberry Pi OS Full:    raspios-full
 
 Image channels:
-  Ubuntu Classic:          devel, daily, release
-  Ubuntu Desktop:          devel, daily, release
+  Ubuntu Classic:          daily, release
+  Ubuntu Desktop:          daily, release
   Ubuntu Core:             edge, beta, candidate, stable
                            dangerous-edge, dangerous-beta, dangerous-candidate, dangerous-stable
   Raspberry Pi OS:         latest
