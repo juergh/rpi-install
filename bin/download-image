@@ -301,7 +301,7 @@ case "${distro}" in
 		;;
 
 	# Ubuntu Core
-	core16|core18|core20|core22|core24)
+	core16|core18|core20|core22|core24|core26)
 		download_ubuntu_core "${distro#core}" "${arch}" "${channel}" "${outfile}"
 		;;
 
