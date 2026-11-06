@@ -67,8 +67,10 @@ done
 
 # Find the boot directory
 if [ -z "${boot_dir}" ] ; then
-	if [ -d /boot/firmware ] ; then
+	if [ -e /boot/firmware/config.txt ] ; then
 		boot_dir=/boot/firmware
+	elif [ -e /run/mnt/ubuntu-seed/config.txt ] ; then
+		boot_dir=/run/mnt/ubuntu-seed
 	else
 		boot_dir=/boot
 	fi
